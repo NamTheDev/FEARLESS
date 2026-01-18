@@ -7,7 +7,7 @@
       "deploy": "bun src/management/deploy-commands.ts",
       "reset": "bun src/management/reset-commands.ts",
       "dev": "bun --watch src/index.ts",
-      "start": "bun src/management/index.ts"
+      "start": "bun src/index.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"
