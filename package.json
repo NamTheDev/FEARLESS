@@ -1,0 +1,18 @@
+{
+  "name": "fearless",
+  "module": "src/index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+      "deploy": "bun src/management/deploy-commands.ts",
+      "reset": "bun src/management/reset-commands.ts",
+      "dev": "bun --watch src/index.ts",
+      "start": "bun src/management/index.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
