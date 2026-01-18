@@ -1,17 +1,22 @@
-import { Events, Message } from "discord.js";
+import { Events, Message, TextChannel } from "discord.js";
 import { BotEvent } from "../types";
 
 const messageTimestamps = new Map<string, number[]>();
 
-const SPAM_LIMIT = 5;
-const TIME_WINDOW = 5000;
+const RAPID_LIMIT = 5;
+const RAPID_WINDOW = 5000;
+const TRIGGER_WINDOW = 3 * 60 * 1000;
 const DATA_FILE = "data/spam.json";
+const STAFF_ROLE_ID = process.env.STAFF_ROLE_ID;
 
-interface SpamData {
-  [userId: string]: {
-    offenseCount: number;
-    lastOffenseTime: number;
-  };
+interface UserSpamData {
+  triggers: number[];
+  muteLevel: number; 
+  lastActionTime: number;
+}
+
+interface SpamDB {
+  [userId: string]: UserSpamData;
 }
 
 export const event: BotEvent = {
@@ -19,70 +24,87 @@ export const event: BotEvent = {
   execute: async (message: Message) => {
     if (message.author.bot || !message.guild) return;
 
+    if (STAFF_ROLE_ID && message.member?.roles.cache.has(STAFF_ROLE_ID)) return;
+
     const userId = message.author.id;
     const now = Date.now();
 
     const stamps = messageTimestamps.get(userId) || [];
     stamps.push(now);
 
-    const recentStamps = stamps.filter(
-      (timestamp) => now - timestamp < TIME_WINDOW,
-    );
+    const recentStamps = stamps.filter(t => now - t < RAPID_WINDOW);
     messageTimestamps.set(userId, recentStamps);
 
-    if (recentStamps.length >= SPAM_LIMIT) {
+    if (recentStamps.length >= RAPID_LIMIT) {
       messageTimestamps.delete(userId);
-      await handleSpamPunishment(message);
+      await handleSpamTrigger(message);
     }
   },
 };
 
-async function handleSpamPunishment(message: Message) {
+async function handleSpamTrigger(message: Message) {
   const userId = message.author.id;
   const now = Date.now();
-  const oneDay = 24 * 60 * 60 * 1000;
-
   const file = Bun.file(DATA_FILE);
-  let data: SpamData = {};
-
+  
+  let db: SpamDB = {};
   if (await file.exists()) {
+    try { db = await file.json(); } catch {}
+  }
+
+  const userData = db[userId] || { triggers: [], muteLevel: 0, lastActionTime: 0 };
+
+  if (now - userData.lastActionTime > 24 * 60 * 60 * 1000) {
+    userData.triggers = [];
+    userData.muteLevel = 0;
+  }
+
+  userData.triggers.push(now);
+  userData.lastActionTime = now;
+
+  const recentTriggers = userData.triggers.filter(t => now - t < TRIGGER_WINDOW);
+  
+  if (message.channel instanceof TextChannel) {
     try {
-      data = await file.json();
-    } catch {
-      data = {};
-    }
+      const fetched = await message.channel.messages.fetch({ limit: 20 });
+      const userMessages = fetched.filter(m => m.author.id === userId);
+      await message.channel.bulkDelete(userMessages, true);
+    } catch {}
   }
 
-  let userRecord = data[userId] || { offenseCount: 0, lastOffenseTime: 0 };
+  let duration = 0;
+  let muteText = "";
 
-  if (now - userRecord.lastOffenseTime > oneDay) {
-    userRecord.offenseCount = 0;
+  if (userData.muteLevel >= 1) {
+    duration = 24 * 60 * 60 * 1000;
+    muteText = "24 hours";
+    userData.muteLevel = 2;
+  } 
+  else if (recentTriggers.length >= 3) {
+    duration = 60 * 60 * 1000;
+    muteText = "1 hour";
+    userData.muteLevel = 1;
+    userData.triggers = []; 
   }
 
-  userRecord.offenseCount++;
-  userRecord.lastOffenseTime = now;
+  db[userId] = userData;
+  await Bun.write(DATA_FILE, JSON.stringify(db, null, 2));
 
-  data[userId] = userRecord;
-  await Bun.write(DATA_FILE, JSON.stringify(data, null, 2));
-
-  let muteHours = userRecord.offenseCount;
-  if (muteHours > 3) muteHours = 3;
-
-  const durationMs = muteHours * 60 * 60 * 1000;
-
-  try {
-    await message.member?.timeout(durationMs, "Anti-Spam Triggered");
-
-    let replyText = `🚫 **Anti-Spam Triggered**\nYou have been muted for **${muteHours} hour(s)**.`;
-
-    if (userRecord.offenseCount >= 3) {
-      replyText += `\n⚠️ **Warning:** You have violated this ${userRecord.offenseCount} times today.`;
+  if (duration > 0) {
+    try {
+      await message.member?.timeout(duration, "Anti-Spam Escalation");
+      if (message.channel.isSendable()) {
+        await message.channel.send(`<@${userId}> 🚫 **Muted for ${muteText}** for repeated spamming.`);
+      }
+    } catch (e) {
+      console.error(e);
     }
-    if (message.channel.isSendable())
-      return await message.channel.send({
-        content: `<@${userId}> ${replyText}`,
-      });
-  } catch (error) {
-    console.error(`Failed to timeout user ${userId}`, error);
+  } else {
+    if (message.channel.isSendable()) {
+      const remaining = 3 - recentTriggers.length;
+      if (remaining > 0) {
+         await message.channel.send(`<@${userId}> ⚠️ Stop spamming! Messages deleted. (${recentTriggers.length}/3 triggers)`);
+      }
+    }
   }
 }
