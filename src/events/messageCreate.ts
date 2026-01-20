@@ -1,5 +1,5 @@
 import { Events, Message, TextChannel } from "discord.js";
-import { BotEvent } from "../types";
+import type { BotEvent } from "../types";
 
 const messageTimestamps = new Map<string, number[]>();
 
