@@ -1,5 +1,6 @@
 import { Events, Message, TextChannel } from "discord.js";
-import type { BotEvent } from "../types";
+import { BotEvent } from "../types";
+import { addXp } from "../utils/leveling";
 
 const messageTimestamps = new Map<string, number[]>();
 
@@ -11,7 +12,7 @@ const STAFF_ROLE_ID = process.env.STAFF_ROLE_ID;
 
 interface UserSpamData {
   triggers: number[];
-  muteLevel: number; 
+  muteLevel: number;
   lastActionTime: number;
 }
 
@@ -22,22 +23,31 @@ interface SpamDB {
 export const event: BotEvent = {
   name: Events.MessageCreate,
   execute: async (message: Message) => {
-    if (message.author.bot || !message.guild) return;
+    if (message.author.bot || !message.guild || message.guild.id === process.env.GUILD_ID) return;
 
-    if (STAFF_ROLE_ID && message.member?.roles.cache.has(STAFF_ROLE_ID)) return;
+    const isStaff =
+      STAFF_ROLE_ID && message.member?.roles.cache.has(STAFF_ROLE_ID);
+    let isSpamming = false;
 
-    const userId = message.author.id;
-    const now = Date.now();
+    if (!isStaff) {
+      const userId = message.author.id;
+      const now = Date.now();
 
-    const stamps = messageTimestamps.get(userId) || [];
-    stamps.push(now);
+      const stamps = messageTimestamps.get(userId) || [];
+      stamps.push(now);
 
-    const recentStamps = stamps.filter(t => now - t < RAPID_WINDOW);
-    messageTimestamps.set(userId, recentStamps);
+      const recentStamps = stamps.filter((t) => now - t < RAPID_WINDOW);
+      messageTimestamps.set(userId, recentStamps);
 
-    if (recentStamps.length >= RAPID_LIMIT) {
-      messageTimestamps.delete(userId);
-      await handleSpamTrigger(message);
+      if (recentStamps.length >= RAPID_LIMIT) {
+        messageTimestamps.delete(userId);
+        isSpamming = true;
+        await handleSpamTrigger(message);
+      }
+    }
+
+    if (!isSpamming) {
+      await addXp(message);
     }
   },
 };
@@ -46,13 +56,19 @@ async function handleSpamTrigger(message: Message) {
   const userId = message.author.id;
   const now = Date.now();
   const file = Bun.file(DATA_FILE);
-  
+
   let db: SpamDB = {};
   if (await file.exists()) {
-    try { db = await file.json(); } catch {}
+    try {
+      db = await file.json();
+    } catch {}
   }
 
-  const userData = db[userId] || { triggers: [], muteLevel: 0, lastActionTime: 0 };
+  const userData = db[userId] || {
+    triggers: [],
+    muteLevel: 0,
+    lastActionTime: 0,
+  };
 
   if (now - userData.lastActionTime > 24 * 60 * 60 * 1000) {
     userData.triggers = [];
@@ -62,12 +78,14 @@ async function handleSpamTrigger(message: Message) {
   userData.triggers.push(now);
   userData.lastActionTime = now;
 
-  const recentTriggers = userData.triggers.filter(t => now - t < TRIGGER_WINDOW);
-  
+  const recentTriggers = userData.triggers.filter(
+    (t) => now - t < TRIGGER_WINDOW,
+  );
+
   if (message.channel instanceof TextChannel) {
     try {
       const fetched = await message.channel.messages.fetch({ limit: 20 });
-      const userMessages = fetched.filter(m => m.author.id === userId);
+      const userMessages = fetched.filter((m) => m.author.id === userId);
       await message.channel.bulkDelete(userMessages, true);
     } catch {}
   }
@@ -79,12 +97,11 @@ async function handleSpamTrigger(message: Message) {
     duration = 24 * 60 * 60 * 1000;
     muteText = "24 hours";
     userData.muteLevel = 2;
-  } 
-  else if (recentTriggers.length >= 3) {
+  } else if (recentTriggers.length >= 3) {
     duration = 60 * 60 * 1000;
     muteText = "1 hour";
     userData.muteLevel = 1;
-    userData.triggers = []; 
+    userData.triggers = [];
   }
 
   db[userId] = userData;
@@ -94,7 +111,9 @@ async function handleSpamTrigger(message: Message) {
     try {
       await message.member?.timeout(duration, "Anti-Spam Escalation");
       if (message.channel.isSendable()) {
-        await message.channel.send(`<@${userId}> 🚫 **Muted for ${muteText}** for repeated spamming.`);
+        await message.channel.send(
+          `<@${userId}> 🚫 **Muted for ${muteText}** for repeated spamming.`,
+        );
       }
     } catch (e) {
       console.error(e);
@@ -103,7 +122,9 @@ async function handleSpamTrigger(message: Message) {
     if (message.channel.isSendable()) {
       const remaining = 3 - recentTriggers.length;
       if (remaining > 0) {
-         await message.channel.send(`<@${userId}> ⚠️ Stop spamming! Messages deleted. (${recentTriggers.length}/3 triggers)`);
+        await message.channel.send(
+          `<@${userId}> ⚠️ Stop spamming! Messages deleted. (${recentTriggers.length}/3 triggers)`,
+        );
       }
     }
   }

@@ -3,7 +3,7 @@ import {
   ChatInputCommandInteraction,
   MessageFlags,
 } from "discord.js";
-import type { SlashCommand } from "../../types";
+import { SlashCommand } from "../../types";
 
 export const command: SlashCommand = {
   data: new SlashCommandBuilder()

@@ -1,0 +1,107 @@
+import { GuildMember, TextChannel } from "discord.js";
+
+const LEVEL_FILE = "data/levels.json";
+const COOLDOWN = 60 * 1000;
+
+const LEVEL_UP_CHANNEL = process.env.LEVEL_UP_CHANNEL_ID;
+const MEDIA_PERMS_ROLE = process.env.MEDIA_PERMS_ROLE_ID;
+
+interface LevelData {
+    xp: number;
+    level: number;
+    lastXpTime: number;
+}
+
+interface LevelDB {
+    [userId: string]: LevelData;
+}
+
+export const calculateLevel = (xp: number) => Math.floor(Math.sqrt(xp / 100));
+
+export async function addXp(message: any) {
+    if (message.author.bot || !message.guild) return;
+
+    const file = Bun.file(LEVEL_FILE);
+    let db: LevelDB = {};
+    
+    if (await file.exists()) {
+        try { db = await file.json(); } catch {}
+    }
+
+    const userId = message.author.id;
+    const userData = db[userId] || { xp: 0, level: 0, lastXpTime: 0 };
+
+    const now = Date.now();
+    if (now - userData.lastXpTime < COOLDOWN) return;
+
+    const xpGain = Math.floor(Math.random() * 11) + 15;
+    
+    userData.xp += xpGain;
+    userData.lastXpTime = now;
+
+    const newLevel = calculateLevel(userData.xp);
+    const didLevelUp = newLevel > userData.level;
+    
+    userData.level = newLevel;
+    db[userId] = userData;
+    
+    await Bun.write(LEVEL_FILE, JSON.stringify(db, null, 2));
+
+    if (didLevelUp) {
+        await handleLevelUp(message.member, newLevel, message.guild);
+    }
+}
+
+async function handleLevelUp(member: GuildMember, level: number, guild: any) {
+    if (LEVEL_UP_CHANNEL) {
+        const channel = guild.channels.cache.get(LEVEL_UP_CHANNEL) as TextChannel;
+        if (channel && channel.isSendable()) {
+            await channel.send(`🎉 **Level Up!** <@${member.id}> has reached **Level ${level}**!`);
+        }
+    }
+
+    if (level >= 10 && MEDIA_PERMS_ROLE) {
+        if (!member.roles.cache.has(MEDIA_PERMS_ROLE)) {
+            try {
+                await member.roles.add(MEDIA_PERMS_ROLE);
+                const channel = guild.channels.cache.get(LEVEL_UP_CHANNEL) as TextChannel;
+                if(channel) await channel.send(`🔓 <@${member.id}> has unlocked **Image Perms**!`);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+    }
+}
+
+export async function getUserData(userId: string) {
+    const file = Bun.file(LEVEL_FILE);
+    if (!await file.exists()) return null;
+    const db: LevelDB = await file.json();
+    return db[userId] || null;
+}
+
+export async function getLeaderboard() {
+    const file = Bun.file(LEVEL_FILE);
+    if (!await file.exists()) return [];
+    const db: LevelDB = await file.json();
+    
+    return Object.entries(db)
+        .sort(([, a], [, b]) => b.xp - a.xp)
+        .slice(0, 10);
+}
+
+export async function setLevel(userId: string, level: number) {
+    const file = Bun.file(LEVEL_FILE);
+    let db: LevelDB = {};
+    if (await file.exists()) db = await file.json();
+
+    const xp = level * level * 100;
+    
+    db[userId] = {
+        xp: xp,
+        level: level,
+        lastXpTime: Date.now()
+    };
+
+    await Bun.write(LEVEL_FILE, JSON.stringify(db, null, 2));
+}
