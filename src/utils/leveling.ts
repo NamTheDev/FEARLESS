@@ -5,6 +5,8 @@ const COOLDOWN = 60 * 1000;
 
 const LEVEL_UP_CHANNEL = process.env.LEVEL_UP_CHANNEL_ID;
 const MEDIA_PERMS_ROLE = process.env.MEDIA_PERMS_ROLE_ID;
+const NICKNAME_PERMS_ROLE = process.env.NICKNAME_PERMS_ROLE_ID;
+const POLL_PERMS_ROLE = process.env.POLL_PERMS_ROLE_ID;
 
 interface LevelData {
     xp: number;
@@ -53,19 +55,40 @@ export async function addXp(message: any) {
 }
 
 async function handleLevelUp(member: GuildMember, level: number, guild: any) {
+    // Notifications
     if (LEVEL_UP_CHANNEL) {
         const channel = guild.channels.cache.get(LEVEL_UP_CHANNEL) as TextChannel;
+        // Only send chat notification if it's a natural level up (not forced via setLevel with no channel context)
+        // However, checking sendable is usually enough
         if (channel && channel.isSendable()) {
-            await channel.send(`🎉 **Level Up!** <@${member.id}> has reached **Level ${level}**!`);
+            // Optional: You might want to disable this spam for bulk /setlevel
         }
     }
 
-    if (level >= 10 && MEDIA_PERMS_ROLE) {
-        if (!member.roles.cache.has(MEDIA_PERMS_ROLE)) {
+    // Level 10: Image & Nickname Perms
+    if (level >= 10) {
+        const rolesToAdd = [];
+        if (MEDIA_PERMS_ROLE && !member.roles.cache.has(MEDIA_PERMS_ROLE)) rolesToAdd.push(MEDIA_PERMS_ROLE);
+        if (NICKNAME_PERMS_ROLE && !member.roles.cache.has(NICKNAME_PERMS_ROLE)) rolesToAdd.push(NICKNAME_PERMS_ROLE);
+        
+        if (rolesToAdd.length > 0) {
             try {
-                await member.roles.add(MEDIA_PERMS_ROLE);
+                await member.roles.add(rolesToAdd);
                 const channel = guild.channels.cache.get(LEVEL_UP_CHANNEL) as TextChannel;
-                if(channel) await channel.send(`🔓 <@${member.id}> has unlocked **Image Perms**!`);
+                if (channel) await channel.send(`🔓 <@${member.id}> has unlocked **Level 10 Perks** (Image & Nickname)!`);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+    }
+
+    // Level 20: Poll Perms
+    if (level >= 20) {
+        if (POLL_PERMS_ROLE && !member.roles.cache.has(POLL_PERMS_ROLE)) {
+            try {
+                await member.roles.add(POLL_PERMS_ROLE);
+                const channel = guild.channels.cache.get(LEVEL_UP_CHANNEL) as TextChannel;
+                if (channel) await channel.send(`📊 <@${member.id}> has unlocked **Poll Permissions**!`);
             } catch (e) {
                 console.error(e);
             }
@@ -90,18 +113,21 @@ export async function getLeaderboard() {
         .slice(0, 10);
 }
 
-export async function setLevel(userId: string, level: number) {
+export async function setLevel(member: GuildMember, level: number) {
     const file = Bun.file(LEVEL_FILE);
     let db: LevelDB = {};
     if (await file.exists()) db = await file.json();
 
     const xp = level * level * 100;
     
-    db[userId] = {
+    db[member.id] = {
         xp: xp,
         level: level,
         lastXpTime: Date.now()
     };
 
     await Bun.write(LEVEL_FILE, JSON.stringify(db, null, 2));
+
+    // Trigger role checks immediately
+    await handleLevelUp(member, level, member.guild);
 }
