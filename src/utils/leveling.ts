@@ -140,3 +140,14 @@ export async function setLevel(member: GuildMember, level: number) {
 
   await handleLevelUp(member, level, member.guild, false);
 }
+
+export async function getUserRank(userId: string) {
+    const file = Bun.file(LEVEL_FILE);
+    if (!await file.exists()) return 0;
+    const db: LevelDB = await file.json();
+    
+    const sorted = Object.keys(db).sort((a, b) => db[b].xp - db[a].xp);
+    const index = sorted.indexOf(userId);
+    
+    return index === -1 ? 0 : index + 1;
+}
