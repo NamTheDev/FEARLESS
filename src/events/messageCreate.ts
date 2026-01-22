@@ -23,7 +23,12 @@ interface SpamDB {
 export const event: BotEvent = {
   name: Events.MessageCreate,
   execute: async (message: Message) => {
-    if (message.author.bot || !message.guild || message.guild.id !== process.env.GUILD_ID) return;
+    if (
+      message.author.bot ||
+      !message.guild ||
+      message.guild.id !== process.env.GUILD_ID
+    )
+      return;
 
     const isStaff =
       STAFF_ROLE_ID && message.member?.roles.cache.has(STAFF_ROLE_ID);
