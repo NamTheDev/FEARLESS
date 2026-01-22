@@ -152,8 +152,8 @@ export async function getUserRank(userId: string) {
   const db: LevelDB = await file.json();
 
   const sorted = Object.keys(db).sort((a, b) => {
-    if(db[a] === undefined) return 1;
-    if(db[b] === undefined) return -1;
+    if (db[a] === undefined) return 1;
+    if (db[b] === undefined) return -1;
     return db[b].xp - db[a].xp;
   });
   const index = sorted.indexOf(userId);
