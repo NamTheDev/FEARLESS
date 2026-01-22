@@ -56,7 +56,12 @@ export async function addXp(message: any) {
   }
 }
 
-async function handleLevelUp(member: GuildMember, level: number, guild: any, conditional = true) {
+async function handleLevelUp(
+  member: GuildMember,
+  level: number,
+  guild: any,
+  conditional = true,
+) {
   if (conditional === true) return;
   if (LEVEL_UP_CHANNEL) {
     const channel = guild.channels.cache.get(LEVEL_UP_CHANNEL) as TextChannel;
@@ -142,12 +147,16 @@ export async function setLevel(member: GuildMember, level: number) {
 }
 
 export async function getUserRank(userId: string) {
-    const file = Bun.file(LEVEL_FILE);
-    if (!await file.exists()) return 0;
-    const db: LevelDB = await file.json();
-    
-    const sorted = Object.keys(db).sort((a, b) => db[b].xp - db[a].xp);
-    const index = sorted.indexOf(userId);
-    
-    return index === -1 ? 0 : index + 1;
+  const file = Bun.file(LEVEL_FILE);
+  if (!(await file.exists())) return 0;
+  const db: LevelDB = await file.json();
+
+  const sorted = Object.keys(db).sort((a, b) => {
+    if(db[a] === undefined) return 1;
+    if(db[b] === undefined) return -1;
+    return db[b].xp - db[a].xp;
+  });
+  const index = sorted.indexOf(userId);
+
+  return index === -1 ? 0 : index + 1;
 }
