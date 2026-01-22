@@ -5,7 +5,7 @@ import {
   Colors,
 } from "discord.js";
 import { SlashCommand } from "../../types";
-import { getUserData } from "../../utils/leveling";
+import { getUserData, getUserRank } from "../../utils/leveling";
 
 export const command: SlashCommand = {
   data: new SlashCommandBuilder()
@@ -20,7 +20,11 @@ export const command: SlashCommand = {
 
   execute: async (interaction: ChatInputCommandInteraction) => {
     const target = interaction.options.getUser("target") || interaction.user;
-    const data = await getUserData(target.id);
+    
+    const [data, rank] = await Promise.all([
+        getUserData(target.id),
+        getUserRank(target.id)
+    ]);
 
     const embed = new EmbedBuilder()
       .setColor(Colors.DarkRed)
@@ -32,13 +36,12 @@ export const command: SlashCommand = {
       return;
     }
 
-    const currentLevelBase = data.level * data.level * 100;
     const nextLevel = data.level + 1;
     const nextLevelReq = nextLevel * nextLevel * 100;
-
     const xpNeeded = nextLevelReq - data.xp;
 
     embed.addFields(
+      { name: "Rank", value: `#${rank}`, inline: true },
       { name: "Level", value: `${data.level}`, inline: true },
       { name: "XP", value: `${data.xp} / ${nextLevelReq}`, inline: true },
       { name: "To Next Level", value: `${xpNeeded} XP needed`, inline: false },
