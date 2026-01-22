@@ -21,7 +21,6 @@ export const command: SlashCommand = {
 
         if (!guild) return;
 
-        // Fetch the actual member to assign roles
         let member;
         try {
             member = await guild.members.fetch(targetUser.id);
