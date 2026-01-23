@@ -60,12 +60,11 @@ async function handleLevelUp(
   member: GuildMember,
   level: number,
   guild: any,
-  sendMessage: boolean = true,
+  sendMessage = true,
 ) {
-  if (!sendMessage || !LEVEL_UP_CHANNEL) return;
+  if (!sendMessage) return;
   const channel = guild.channels.cache.get(LEVEL_UP_CHANNEL) as TextChannel;
   if (channel && channel.isSendable()) {
-    console.log(LEVEL_UP_CHANNEL);
     await channel.send(`<@${member.id}> has reached ${level}. GG!`);
   }
 
@@ -127,7 +126,7 @@ export async function getLeaderboard() {
     .slice(0, 10);
 }
 
-export async function setLevel(member: GuildMember, level: number, triggeredByCommand: boolean = false) {
+export async function setLevel(member: GuildMember, level: number, triggeredByCommand = false) {
   const file = Bun.file(LEVEL_FILE);
   let db: LevelDB = {};
   if (await file.exists()) db = await file.json();
@@ -142,7 +141,7 @@ export async function setLevel(member: GuildMember, level: number, triggeredByCo
 
   await Bun.write(LEVEL_FILE, JSON.stringify(db, null, 2));
 
-  await handleLevelUp(member, level, member.guild, triggeredByCommand);
+  await handleLevelUp(member, level, member.guild, !triggeredByCommand);
 }
 
 export async function getUserRank(userId: string) {
