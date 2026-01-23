@@ -7,6 +7,7 @@
     "deploy": "bun src/management/deploy-commands.ts",
     "reset": "bun src/management/reset-commands.ts",
     "dev": "bun --watch src/index.ts",
+    "build": "./build.sh",
     "start": "bun src/index.ts"
   },
   "devDependencies": {
