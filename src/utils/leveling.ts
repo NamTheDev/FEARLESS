@@ -56,16 +56,11 @@ export async function addXp(message: any) {
   }
 }
 
-async function handleLevelUp(
-  member: GuildMember,
-  level: number,
-  guild: any,
-  conditional = true,
-) {
-  if (conditional === true) return;
+async function handleLevelUp(member: GuildMember, level: number, guild: any) {
   if (LEVEL_UP_CHANNEL) {
     const channel = guild.channels.cache.get(LEVEL_UP_CHANNEL) as TextChannel;
     if (channel && channel.isSendable()) {
+      console.log(LEVEL_UP_CHANNEL);
       await channel.send(`<@${member.id}> has reached ${level}. GG!`);
     }
   }
@@ -143,7 +138,7 @@ export async function setLevel(member: GuildMember, level: number) {
 
   await Bun.write(LEVEL_FILE, JSON.stringify(db, null, 2));
 
-  await handleLevelUp(member, level, member.guild, false);
+  await handleLevelUp(member, level, member.guild);
 }
 
 export async function getUserRank(userId: string) {
