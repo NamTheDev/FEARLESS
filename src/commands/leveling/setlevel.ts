@@ -29,7 +29,7 @@ export const command: SlashCommand = {
             return;
         }
 
-        await setLevel(member, level);
+        await setLevel(member, level, true);
 
         await interaction.reply({ 
             content: `✅ Set **${targetUser.username}** to **Level ${level}**. Roles have been updated.`,

@@ -56,13 +56,17 @@ export async function addXp(message: any) {
   }
 }
 
-async function handleLevelUp(member: GuildMember, level: number, guild: any) {
-  if (LEVEL_UP_CHANNEL) {
-    const channel = guild.channels.cache.get(LEVEL_UP_CHANNEL) as TextChannel;
-    if (channel && channel.isSendable()) {
-      console.log(LEVEL_UP_CHANNEL);
-      await channel.send(`<@${member.id}> has reached ${level}. GG!`);
-    }
+async function handleLevelUp(
+  member: GuildMember,
+  level: number,
+  guild: any,
+  sendMessage: boolean = true,
+) {
+  if (!sendMessage || !LEVEL_UP_CHANNEL) return;
+  const channel = guild.channels.cache.get(LEVEL_UP_CHANNEL) as TextChannel;
+  if (channel && channel.isSendable()) {
+    console.log(LEVEL_UP_CHANNEL);
+    await channel.send(`<@${member.id}> has reached ${level}. GG!`);
   }
 
   if (level >= 10) {
@@ -123,7 +127,7 @@ export async function getLeaderboard() {
     .slice(0, 10);
 }
 
-export async function setLevel(member: GuildMember, level: number) {
+export async function setLevel(member: GuildMember, level: number, triggeredByCommand: boolean = false) {
   const file = Bun.file(LEVEL_FILE);
   let db: LevelDB = {};
   if (await file.exists()) db = await file.json();
@@ -138,7 +142,7 @@ export async function setLevel(member: GuildMember, level: number) {
 
   await Bun.write(LEVEL_FILE, JSON.stringify(db, null, 2));
 
-  await handleLevelUp(member, level, member.guild);
+  await handleLevelUp(member, level, member.guild, triggeredByCommand);
 }
 
 export async function getUserRank(userId: string) {
