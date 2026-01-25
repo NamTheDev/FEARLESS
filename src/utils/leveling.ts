@@ -23,7 +23,8 @@ export const calculateLevel = (xp: number) => Math.floor(xp / 400);
 
 export async function addXp(message: any) {
   if (message.author.bot || !message.guild) return;
-  if (COMMUNITY_CATEGORY && message.channel.parentId !== COMMUNITY_CATEGORY) return;
+  if (COMMUNITY_CATEGORY && message.channel.parentId !== COMMUNITY_CATEGORY)
+    return;
 
   const file = Bun.file(LEVEL_FILE);
   let db: LevelDB = {};
@@ -128,7 +129,11 @@ export async function getLeaderboard() {
     .slice(0, 10);
 }
 
-export async function setLevel(member: GuildMember, level: number, triggeredByCommand = false) {
+export async function setLevel(
+  member: GuildMember,
+  level: number,
+  triggeredByCommand = false,
+) {
   const file = Bun.file(LEVEL_FILE);
   let db: LevelDB = {};
   if (await file.exists()) db = await file.json();
@@ -152,7 +157,7 @@ export async function adjustXp(member: GuildMember, amount: number) {
   if (await file.exists()) db = await file.json();
 
   const userData = db[member.id] || { xp: 0, level: 0, lastXpTime: 0 };
-  
+
   userData.xp += amount;
   if (userData.xp < 0) userData.xp = 0;
 
