@@ -7,6 +7,7 @@ const LEVEL_UP_CHANNEL = process.env.LEVEL_UP_CHANNEL_ID;
 const MEDIA_PERMS_ROLE = process.env.MEDIA_PERMS_ROLE_ID;
 const NICKNAME_PERMS_ROLE = process.env.NICKNAME_PERMS_ROLE_ID;
 const POLL_PERMS_ROLE = process.env.POLL_PERMS_ROLE_ID;
+const COMMUNITY_CATEGORY = process.env.COMMUNITY_CATEGORY_ID;
 
 interface LevelData {
   xp: number;
@@ -18,10 +19,11 @@ interface LevelDB {
   [userId: string]: LevelData;
 }
 
-export const calculateLevel = (xp: number) => Math.floor(Math.sqrt(xp / 100));
+export const calculateLevel = (xp: number) => Math.floor(xp / 400);
 
 export async function addXp(message: any) {
   if (message.author.bot || !message.guild) return;
+  if (COMMUNITY_CATEGORY && message.channel.parentId !== COMMUNITY_CATEGORY) return;
 
   const file = Bun.file(LEVEL_FILE);
   let db: LevelDB = {};
@@ -65,7 +67,7 @@ async function handleLevelUp(
   if (!sendMessage) return;
   const channel = guild.channels.cache.get(LEVEL_UP_CHANNEL) as TextChannel;
   if (channel && channel.isSendable()) {
-    await channel.send(`<@${member.id}> has reached ${level}. GG!`);
+    await channel.send(`<@${member.id}> has reached **Level ${level}**. GG!`);
   }
 
   if (level >= 10) {
@@ -131,7 +133,7 @@ export async function setLevel(member: GuildMember, level: number, triggeredByCo
   let db: LevelDB = {};
   if (await file.exists()) db = await file.json();
 
-  const xp = level * level * 100;
+  const xp = level * 400;
 
   db[member.id] = {
     xp: xp,
@@ -142,6 +144,29 @@ export async function setLevel(member: GuildMember, level: number, triggeredByCo
   await Bun.write(LEVEL_FILE, JSON.stringify(db, null, 2));
 
   await handleLevelUp(member, level, member.guild, !triggeredByCommand);
+}
+
+export async function adjustXp(member: GuildMember, amount: number) {
+  const file = Bun.file(LEVEL_FILE);
+  let db: LevelDB = {};
+  if (await file.exists()) db = await file.json();
+
+  const userData = db[member.id] || { xp: 0, level: 0, lastXpTime: 0 };
+  
+  userData.xp += amount;
+  if (userData.xp < 0) userData.xp = 0;
+
+  const newLevel = calculateLevel(userData.xp);
+  const didLevelUp = newLevel > userData.level;
+
+  userData.level = newLevel;
+  db[member.id] = userData;
+
+  await Bun.write(LEVEL_FILE, JSON.stringify(db, null, 2));
+
+  if (didLevelUp) {
+    await handleLevelUp(member, newLevel, member.guild);
+  }
 }
 
 export async function getUserRank(userId: string) {

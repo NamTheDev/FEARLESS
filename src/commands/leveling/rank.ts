@@ -37,7 +37,7 @@ export const command: SlashCommand = {
     }
 
     const nextLevel = data.level + 1;
-    const nextLevelReq = nextLevel * nextLevel * 100;
+    const nextLevelReq = nextLevel * 400;
     const xpNeeded = nextLevelReq - data.xp;
 
     embed.addFields(
