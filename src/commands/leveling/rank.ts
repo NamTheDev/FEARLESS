@@ -20,10 +20,10 @@ export const command: SlashCommand = {
 
   execute: async (interaction: ChatInputCommandInteraction) => {
     const target = interaction.options.getUser("target") || interaction.user;
-    
+
     const [data, rank] = await Promise.all([
-        getUserData(target.id),
-        getUserRank(target.id)
+      getUserData(target.id),
+      getUserRank(target.id),
     ]);
 
     const embed = new EmbedBuilder()
