@@ -10,7 +10,6 @@ import { setLevel } from "../../utils/leveling";
 export const command: SlashCommand = {
   data: new SlashCommandBuilder()
     .setName("setlevel")
-    .setDescription("Force set a user to a specific level (Admin Only)")
     .setDescription("Force set a user to a specific level")
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addUserOption((opt) =>
