@@ -1,7 +1,8 @@
-import { Client, Collection, GatewayIntentBits, Partials } from "discord.js";
-import { readdirSync } from "node:fs";
-import { join } from "node:path";
-import { SlashCommand, BotEvent } from "./types";
+import { Client, GatewayIntentBits, Partials } from "discord.js";
+import { CONFIG } from "./config";
+import { loadCommands } from "./handlers/commandHandler";
+import { loadEvents } from "./handlers/eventHandler";
+import { sendError } from "./utils/logger";
 
 const client = new Client({
   intents: [
@@ -14,40 +15,22 @@ const client = new Client({
   partials: [Partials.Message, Partials.Channel, Partials.Reaction],
 });
 
-client.commands = new Collection<string, SlashCommand>();
+async function bootstrap() {
+  try {
+    await loadCommands(client);
+    await loadEvents(client);
 
-const foldersPath = join(__dirname, "commands");
-const commandFolders = readdirSync(foldersPath);
+    process.on("unhandledRejection", async (err: Error) => {
+      console.error(err);
+      const g = client.guilds.cache.get(CONFIG.GUILD_ID);
+      if (g) await sendError(g, err, "Global Reject");
+    });
 
-for (const folder of commandFolders) {
-  const commandsPath = join(foldersPath, folder);
-  const commandFiles = readdirSync(commandsPath).filter((file) =>
-    file.endsWith(".ts"),
-  );
-
-  for (const file of commandFiles) {
-    const filePath = join(commandsPath, file);
-    const { command } = await import(filePath);
-    if ("data" in command && "execute" in command) {
-      client.commands.set(command.data.name, command);
-    }
+    await client.login(CONFIG.TOKEN);
+  } catch (e) {
+    console.error(e);
+    process.exit(1);
   }
 }
 
-const eventsPath = join(__dirname, "events");
-const eventFiles = readdirSync(eventsPath).filter((file) =>
-  file.endsWith(".ts"),
-);
-
-for (const file of eventFiles) {
-  const filePath = join(eventsPath, file);
-  const { event } = (await import(filePath)) as { event: BotEvent };
-
-  if (event.once) {
-    client.once(event.name, (...args) => event.execute(...args));
-  } else {
-    client.on(event.name, (...args) => event.execute(...args));
-  }
-}
-
-client.login(process.env.DISCORD_TOKEN);
+bootstrap();
