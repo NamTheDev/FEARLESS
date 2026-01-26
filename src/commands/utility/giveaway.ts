@@ -43,6 +43,7 @@ export const command: SlashCommand = {
     if (!interaction.channel?.isSendable()) return;
     const msg = await interaction.channel.send({ embeds: [embed] })
     
+    
     await msg.react("🎉");
 
     await createGiveaway({
@@ -53,6 +54,8 @@ export const command: SlashCommand = {
       entrants: [],
       active: true,
     });
+    
+    await interaction.reply('Giveaway started! 🎉')
 
     setTimeout(() => endGiveaway(msg.id, interaction.guild!), mins * 60000);
   },
