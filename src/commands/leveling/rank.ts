@@ -2,10 +2,11 @@ import {
   SlashCommandBuilder,
   ChatInputCommandInteraction,
   EmbedBuilder,
-  Colors,
 } from "discord.js";
 import { SlashCommand, UserData } from "../../types";
 import { getUserData, getUserRank } from "../../utils/leveling";
+import { CONFIG } from "../../config";
+import { Responder } from "../../utils/responder";
 
 export const command: SlashCommand = {
   data: new SlashCommandBuilder()
@@ -30,12 +31,12 @@ export const command: SlashCommand = {
     const rank = secondEntry as number | null;
 
     const embed = new EmbedBuilder()
-      .setColor(Colors.DarkRed)
+      .setColor(CONFIG.COLORS.SUCCESS)
       .setAuthor({ name: target.username, iconURL: target.displayAvatarURL() });
 
     if (!data) {
       embed.setDescription("Has not earned any XP yet.");
-      await interaction.reply({ embeds: [embed] });
+      await Responder.reply(interaction, { embeds: [embed] });
       return;
     }
 
@@ -50,6 +51,6 @@ export const command: SlashCommand = {
       { name: "To Next Level", value: `${xpNeeded} XP needed`, inline: false },
     );
 
-    await interaction.reply({ embeds: [embed] });
+    await Responder.reply(interaction, { embeds: [embed] });
   },
 };

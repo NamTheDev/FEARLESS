@@ -2,10 +2,11 @@ import {
   SlashCommandBuilder,
   ChatInputCommandInteraction,
   EmbedBuilder,
-  Colors,
 } from "discord.js";
 import { SlashCommand } from "../../types";
 import { getLeaderboard } from "../../utils/leveling";
+import { CONFIG } from "../../config";
+import { Responder } from "../../utils/responder";
 
 export const command: SlashCommand = {
   data: new SlashCommandBuilder()
@@ -17,7 +18,7 @@ export const command: SlashCommand = {
 
     const embed = new EmbedBuilder()
       .setTitle("🏆 Server Leaderboard")
-      .setColor(Colors.DarkRed)
+      .setColor(CONFIG.COLORS.SUCCESS)
       .setTimestamp();
 
     if (topUsers.length === 0) {
@@ -38,6 +39,6 @@ export const command: SlashCommand = {
       embed.setDescription(description);
     }
 
-    await interaction.reply({ embeds: [embed] });
+    await Responder.reply(interaction, { embeds: [embed] });
   },
 };

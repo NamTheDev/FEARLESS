@@ -1,6 +1,7 @@
 import { Guild, TextChannel } from "discord.js";
 import db from "./database";
 import { Giveaway } from "../types";
+import { getChannel } from "./fetchers";
 
 export function loadGiveaways() {}
 export function getActiveGiveaway(id: string): Giveaway | null {
@@ -42,20 +43,7 @@ export async function endGiveaway(id: string, guild: Guild) {
   if (!g) return;
   db.run("UPDATE giveaways SET active = 0 WHERE id = ?", [id]);
 
-  // Try cache first, then fetch to handle cold caches / deleted-from-cache channels
-  let channel = guild.channels.cache.get(g.channelId) as
-    | TextChannel
-    | undefined;
-  if (!channel) {
-    try {
-      const fetched = (await guild.channels.fetch(
-        g.channelId,
-      )) as TextChannel | null;
-      if (fetched) channel = fetched;
-    } catch {
-      // failed to fetch (maybe deleted) - bail out gracefully
-    }
-  }
+  const channel = await getChannel(guild, g.channelId);
   if (!channel) return;
 
   const winner = pickWinner(g);

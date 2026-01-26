@@ -1,9 +1,6 @@
-import {
-  SlashCommandBuilder,
-  ChatInputCommandInteraction,
-  MessageFlags,
-} from "discord.js";
+import { SlashCommandBuilder, ChatInputCommandInteraction } from "discord.js";
 import { SlashCommand } from "../../types";
+import { Responder } from "../../utils/responder";
 
 export const command: SlashCommand = {
   data: new SlashCommandBuilder()
@@ -11,18 +8,16 @@ export const command: SlashCommand = {
     .setDescription("Displays the bot latency"),
 
   execute: async (interaction: ChatInputCommandInteraction) => {
-    const response = await interaction.deferReply({
-      flags: MessageFlags.Ephemeral,
-      withResponse: true,
-    });
+    await interaction.deferReply({ ephemeral: true });
 
-    const message = response.resource?.message;
+    // fetch the deferred reply message to measure latency
+    const message = (await interaction.fetchReply()) as any;
 
     const createdTimestamp = message ? message.createdTimestamp : Date.now();
     const latency = createdTimestamp - interaction.createdTimestamp;
     const apiPing = interaction.client.ws.ping;
 
-    await interaction.editReply({
+    await Responder.reply(interaction, {
       content: `🏓 **Pong!**\nLatency: \`${latency}ms\`\nAPI Heartbeat: \`${apiPing}ms\``,
     });
   },

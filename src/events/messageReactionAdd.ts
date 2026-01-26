@@ -1,6 +1,7 @@
 import { Events, MessageReaction, User } from "discord.js";
 import { BotEvent } from "../types";
 import { getRoleFromReaction } from "../utils/reactionRoles";
+import { getMember } from "../utils/fetchers";
 import { getActiveGiveaway, updateEntrants } from "../utils/giveaway";
 
 export const event: BotEvent = {
@@ -19,8 +20,8 @@ export const event: BotEvent = {
 
     const roleId = getRoleFromReaction(mid, emoji);
     if (roleId && reaction.message.guild) {
-      const member = await reaction.message.guild.members.fetch(user.id);
-      await member.roles.add(roleId).catch(() => null);
+      const member = await getMember(reaction.message.guild, user.id);
+      if (member) await member.roles.add(roleId).catch(() => null);
     }
   },
 };

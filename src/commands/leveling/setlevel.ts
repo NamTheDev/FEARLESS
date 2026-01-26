@@ -2,10 +2,11 @@ import {
   SlashCommandBuilder,
   ChatInputCommandInteraction,
   PermissionFlagsBits,
-  MessageFlags,
 } from "discord.js";
 import { SlashCommand } from "../../types";
 import { setLevel } from "../../utils/leveling";
+import { getMember } from "../../utils/fetchers";
+import { Responder } from "../../utils/responder";
 
 export const command: SlashCommand = {
   data: new SlashCommandBuilder()
@@ -29,22 +30,18 @@ export const command: SlashCommand = {
 
     if (!guild) return;
 
-    let member;
-    try {
-      member = await guild.members.fetch(targetUser.id);
-    } catch {
-      await interaction.reply({
-        content: "User not found in this guild.",
-        flags: MessageFlags.Ephemeral,
-      });
+    const member = await getMember(guild, targetUser.id);
+    if (!member) {
+      await Responder.error(interaction, "User not found in this server.");
       return;
     }
 
     await setLevel(member, level, true);
 
-    await interaction.reply({
-      content: `✅ Set ${targetUser.username} to **Level ${level}**.`,
-      flags: MessageFlags.Ephemeral,
-    });
+    await Responder.success(
+      interaction,
+      `Set ${targetUser.username} to **Level ${level}**.`,
+      true,
+    );
   },
 };

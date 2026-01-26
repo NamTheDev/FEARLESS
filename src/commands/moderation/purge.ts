@@ -3,11 +3,11 @@ import {
   ChatInputCommandInteraction,
   PermissionFlagsBits,
   EmbedBuilder,
-  Colors,
-  MessageFlags,
 } from "discord.js";
 import { SlashCommand } from "../../types";
 import { sendLog } from "../../utils/logger";
+import { CONFIG } from "../../config";
+import { Responder } from "../../utils/responder";
 
 export const command: SlashCommand = {
   data: new SlashCommandBuilder()
@@ -30,7 +30,7 @@ export const command: SlashCommand = {
     const amount = interaction.options.getInteger("amount", true);
     const target = interaction.options.getUser("target");
 
-    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    await interaction.deferReply({ ephemeral: true });
 
     const messages = await interaction.channel?.messages.fetch({
       limit: amount,
@@ -44,7 +44,7 @@ export const command: SlashCommand = {
     });
 
     if (toDelete.size === 0) {
-      await interaction.editReply("No eligible messages found.");
+      await Responder.error(interaction, "No eligible messages found.", true);
       return;
     }
 
@@ -53,11 +53,15 @@ export const command: SlashCommand = {
       true,
     );
 
-    await interaction.editReply(`Deleted **${deleted.size}** messages.`);
+    await Responder.success(
+      interaction,
+      `Deleted ${deleted.size} messages.`,
+      true,
+    );
 
     const log = new EmbedBuilder()
       .setTitle("🗑️ Purge Executed")
-      .setColor(Colors.Orange)
+      .setColor(CONFIG.COLORS.INFO)
       .addFields(
         { name: "Moderator", value: `<@${interaction.user.id}>`, inline: true },
         { name: "Channel", value: `<#${interaction.channelId}>`, inline: true },

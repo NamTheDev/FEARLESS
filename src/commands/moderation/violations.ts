@@ -5,10 +5,10 @@ import {
   EmbedBuilder,
   time,
   TimestampStyles,
-  MessageFlags,
-  Colors,
 } from "discord.js";
 import { SlashCommand } from "../../types";
+import { CONFIG } from "../../config";
+import { Responder } from "../../utils/responder";
 
 const DATA_FILE = "data/spam.json";
 
@@ -44,7 +44,9 @@ export const command: SlashCommand = {
       }
     }
 
-    const embed = new EmbedBuilder().setColor(Colors.DarkRed).setTimestamp();
+    const embed = new EmbedBuilder()
+      .setColor(CONFIG.COLORS.SUCCESS)
+      .setTimestamp();
 
     if (targetUser) {
       const record = data[targetUser.id];
@@ -91,6 +93,6 @@ export const command: SlashCommand = {
       }
     }
 
-    await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
+    await Responder.reply(interaction, { embeds: [embed], ephemeral: true });
   },
 };

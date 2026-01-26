@@ -3,11 +3,11 @@ import {
   ChatInputCommandInteraction,
   PermissionFlagsBits,
   EmbedBuilder,
-  Colors,
-  MessageFlags,
 } from "discord.js";
 import { SlashCommand } from "../../types";
 import { createGiveaway, endGiveaway } from "../../utils/giveaway";
+import { CONFIG } from "../../config";
+import { Responder } from "../../utils/responder";
 
 export const command: SlashCommand = {
   data: new SlashCommandBuilder()
@@ -30,14 +30,14 @@ export const command: SlashCommand = {
     const mins = interaction.options.getInteger("minutes", true);
     const end = Date.now() + mins * 60000;
 
-    await interaction.deferReply({ flags: [MessageFlags.Ephemeral] });
+    await interaction.deferReply({ ephemeral: true });
 
     const embed = new EmbedBuilder()
       .setTitle("🎉 GIVEAWAY STARTED")
       .setDescription(
         `Prize: **${prize}**\nReact with 🎉 to enter!\n\n*Odds: Early group (first 3) gets 80% shared chance!*`,
       )
-      .setColor(Colors.Blue)
+      .setColor(CONFIG.COLORS.GIVEAWAY)
       .setTimestamp(end);
 
     if (!interaction.channel?.isSendable()) return;
@@ -54,7 +54,7 @@ export const command: SlashCommand = {
       active: true,
     });
 
-    await interaction.followUp("Giveaway started! 🎉");
+    await Responder.success(interaction, "Giveaway started! 🎉");
 
     setTimeout(() => endGiveaway(msg.id, interaction.guild!), mins * 60000);
   },

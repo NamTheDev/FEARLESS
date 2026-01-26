@@ -2,6 +2,7 @@ import { Message, GuildMember, TextChannel, ChannelType } from "discord.js";
 import { CONFIG } from "../config";
 import db from "./database";
 import { LevelingRow } from "../types";
+import { getChannel, getMember } from "./fetchers";
 
 // Prepared statement to reduce overhead for high-frequency writes
 const upsertLevelStmt = db.prepare(
@@ -89,17 +90,22 @@ export function getLeaderboard(): Array<
 }
 
 async function announceLevelUp(member: GuildMember, level: number) {
-  const channel = member.guild.channels.cache.get(CONFIG.CHANNELS.LEVEL_UP) as
-    | TextChannel
-    | undefined;
+  const channel = await getChannel(member.guild, CONFIG.CHANNELS.LEVEL_UP);
   if (channel && channel.isTextBased()) {
     await channel.send({
       content: `<@${member.id}> has reached **Level ${level}**. GG!`,
     });
   }
-  if (level >= 10)
-    await member.roles
+
+  // Ensure we have a fresh member object before applying role changes
+  const freshMember = (await getMember(member.guild, member.id)) || member;
+
+  if (level >= 10) {
+    await freshMember.roles
       .add([CONFIG.ROLES.MEDIA, CONFIG.ROLES.NICKNAME])
       .catch(() => null);
-  if (level >= 20) await member.roles.add(CONFIG.ROLES.POLL).catch(() => null);
+  }
+  if (level >= 20) {
+    await freshMember.roles.add(CONFIG.ROLES.POLL).catch(() => null);
+  }
 }

@@ -1,10 +1,9 @@
 import { EmbedBuilder, Guild, TextChannel } from "discord.js";
 import { CONFIG } from "../config";
+import { getChannel } from "./fetchers";
 
 export async function sendLog(guild: Guild, embed: EmbedBuilder) {
-  const channel = guild.channels.cache.get(
-    CONFIG.LOG_CHANNEL_ID,
-  ) as TextChannel;
+  const channel = await getChannel(guild, CONFIG.LOG_CHANNEL_ID);
   if (!channel || !channel.isSendable()) return;
   await channel.send({ embeds: [embed] });
 }

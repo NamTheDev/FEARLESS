@@ -2,10 +2,11 @@ import {
   SlashCommandBuilder,
   ChatInputCommandInteraction,
   PermissionFlagsBits,
-  MessageFlags,
 } from "discord.js";
 import { SlashCommand } from "../../types";
 import { adjustXp } from "../../utils/leveling";
+import { getMember } from "../../utils/fetchers";
+import { Responder } from "../../utils/responder";
 
 export const command: SlashCommand = {
   data: new SlashCommandBuilder()
@@ -48,14 +49,9 @@ export const command: SlashCommand = {
 
     if (!guild) return;
 
-    let member;
-    try {
-      member = await guild.members.fetch(targetUser.id);
-    } catch {
-      await interaction.reply({
-        content: "User not found in this guild.",
-        flags: MessageFlags.Ephemeral,
-      });
+    const member = await getMember(guild, targetUser.id);
+    if (!member) {
+      await Responder.error(interaction, "User not found in this server.");
       return;
     }
 
@@ -63,16 +59,18 @@ export const command: SlashCommand = {
 
     if (subcommand === "give") {
       await adjustXp(member, amount);
-      await interaction.reply({
-        content: `✅ Gave **${amount} XP** to ${targetUser.username}.`,
-        flags: MessageFlags.Ephemeral,
-      });
+      await Responder.success(
+        interaction,
+        `Gave **${amount} XP** to ${targetUser.username}.`,
+        true,
+      );
     } else if (subcommand === "deduct") {
       await adjustXp(member, -amount);
-      await interaction.reply({
-        content: `✅ Removed **${amount} XP** from ${targetUser.username}.`,
-        flags: MessageFlags.Ephemeral,
-      });
+      await Responder.success(
+        interaction,
+        `Removed **${amount} XP** from ${targetUser.username}.`,
+        true,
+      );
     }
   },
 };

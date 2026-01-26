@@ -1,5 +1,6 @@
 import { Message, TextChannel, EmbedBuilder } from "discord.js";
 import { CONFIG } from "../config";
+import { getChannel } from "./fetchers";
 import { sendLog } from "./logger";
 import db from "./database";
 
@@ -45,12 +46,15 @@ async function executeSpamAction(message: Message) {
     [userId, now],
   );
 
-  if (message.channel instanceof TextChannel) {
-    const fetched = await message.channel.messages.fetch({ limit: 10 });
-    await message.channel.bulkDelete(
-      fetched.filter((m) => m.author.id === userId),
-      true,
-    );
+  if (message.guild && message.channel instanceof TextChannel) {
+    const channel = await getChannel(message.guild, message.channel.id);
+    if (channel) {
+      const fetched = await channel.messages.fetch({ limit: 10 });
+      await channel.bulkDelete(
+        fetched.filter((m) => m.author.id === userId),
+        true,
+      );
+    }
   }
 
   const log = new EmbedBuilder()

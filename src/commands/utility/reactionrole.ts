@@ -5,6 +5,8 @@ import {
 } from "discord.js";
 import { SlashCommand } from "../../types";
 import { addReactionRole } from "../../utils/reactionRoles";
+import { getRole } from "../../utils/fetchers";
+import { Responder } from "../../utils/responder";
 
 export const command: SlashCommand = {
   data: new SlashCommandBuilder()
@@ -27,30 +29,32 @@ export const command: SlashCommand = {
   execute: async (interaction: ChatInputCommandInteraction) => {
     const mid = interaction.options.getString("message_id", true);
     const emoji = interaction.options.getString("emoji", true);
-    const role = interaction.options.getRole("role", true);
+    const roleOption = interaction.options.getRole("role", true);
+    const role = interaction.guild
+      ? await getRole(interaction.guild, roleOption.id)
+      : null;
+    if (!role) {
+      await Responder.error(interaction, "Role not found in this server.");
+      return;
+    }
 
     try {
       const msg = await interaction.channel?.messages.fetch(mid);
       if (!msg) {
-        interaction.reply({
-          content: "Message not found.",
-          ephemeral: true,
-        });
+        await Responder.error(interaction, "Message not found.", true);
         return;
       }
 
       await msg.react(emoji);
       await addReactionRole(mid, emoji, role.id);
 
-      await interaction.reply({
-        content: "✅ Reaction role configured!",
-        ephemeral: true,
-      });
+      await Responder.success(interaction, "Reaction role configured!", true);
     } catch (e) {
-      await interaction.reply({
-        content: "Error: Ensure bot has perms and emoji is valid.",
-        ephemeral: true,
-      });
+      await Responder.error(
+        interaction,
+        "Error: Ensure bot has perms and emoji is valid.",
+        true,
+      );
     }
   },
 };
