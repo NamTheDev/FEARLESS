@@ -82,11 +82,7 @@ async function announceLevelUp(member: GuildMember, level: number) {
     CONFIG.CHANNELS.LEVEL_UP,
   ) as TextChannel;
   if (channel) {
-    const embed = new EmbedBuilder()
-      .setTitle("🆙 Level Up!")
-      .setDescription(`<@${member.id}> reached **Level ${level}**`)
-      .setColor(CONFIG.COLORS.SUCCESS);
-    await channel.send({ embeds: [embed] });
+    await channel.send({ content: `<@${member.id}> has reached **Level ${level}**. GG!` });
   }
   if (level >= 10)
     await member.roles
