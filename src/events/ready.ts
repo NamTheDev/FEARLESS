@@ -9,7 +9,7 @@ export const event: BotEvent = {
   once: true,
   execute: async (client: Client) => {
     console.log(`Ready! ${client.user?.tag}`);
-    await loadGiveaways();
+    loadGiveaways();
     await loadReactionRoles();
     const g = client.guilds.cache.get(CONFIG.GUILD_ID);
     if (g) resumeGiveaways(g);

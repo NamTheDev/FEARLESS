@@ -14,15 +14,17 @@ export const command: SlashCommand = {
     .setName("purge")
     .setDescription("Bulk delete messages")
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-    .addIntegerOption((o) =>
-      o
+    .addIntegerOption((option) =>
+      option
         .setName("amount")
         .setDescription("1-100 messages")
         .setRequired(true)
         .setMinValue(1)
         .setMaxValue(100),
     )
-    .addUserOption((o) => o.setName("target").setDescription("Filter by user")),
+    .addUserOption((option) =>
+      option.setName("target").setDescription("Filter by user"),
+    ),
 
   execute: async (interaction: ChatInputCommandInteraction) => {
     const amount = interaction.options.getInteger("amount", true);
@@ -36,9 +38,9 @@ export const command: SlashCommand = {
     if (!messages) return;
 
     const toDelete = messages.filter((m) => {
-      const ageCheck = Date.now() - m.createdTimestamp < 1209600000; // 14 days
+      const ageCheck = Date.now() - m.createdTimestamp < 1209600000;
       const userCheck = target ? m.author.id === target.id : true;
-      return ageCheck && userCheck && !m.system; // Exclude system messages
+      return ageCheck && userCheck && !m.system;
     });
 
     if (toDelete.size === 0) {

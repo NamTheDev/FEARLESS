@@ -14,11 +14,11 @@ export const command: SlashCommand = {
     .setName("giveaway")
     .setDescription("Start a weighted giveaway")
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-    .addStringOption((o) =>
-      o.setName("prize").setDescription("Prize name").setRequired(true),
+    .addStringOption((option) =>
+      option.setName("prize").setDescription("Prize name").setRequired(true),
     )
-    .addIntegerOption((o) =>
-      o
+    .addIntegerOption((option) =>
+      option
         .setName("minutes")
         .setDescription("Duration")
         .setRequired(true)
@@ -39,11 +39,10 @@ export const command: SlashCommand = {
       )
       .setColor(Colors.Blue)
       .setTimestamp(end);
-    
+
     if (!interaction.channel?.isSendable()) return;
-    const msg = await interaction.channel.send({ embeds: [embed] })
-    
-    
+    const msg = await interaction.channel.send({ embeds: [embed] });
+
     await msg.react("🎉");
 
     await createGiveaway({
@@ -54,8 +53,8 @@ export const command: SlashCommand = {
       entrants: [],
       active: true,
     });
-    
-    await interaction.followUp('Giveaway started! 🎉')
+
+    await interaction.followUp("Giveaway started! 🎉");
 
     setTimeout(() => endGiveaway(msg.id, interaction.guild!), mins * 60000);
   },

@@ -12,8 +12,8 @@ export const command: SlashCommand = {
     .setName("setxp")
     .setDescription("Give or remove XP from a user")
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-    .addSubcommand((sub) =>
-      sub
+    .addSubcommand((subcommand) =>
+      subcommand
         .setName("give")
         .setDescription("Give XP to a user")
         .addUserOption((opt) =>
@@ -26,15 +26,15 @@ export const command: SlashCommand = {
             .setRequired(true),
         ),
     )
-    .addSubcommand((sub) =>
-      sub
+    .addSubcommand((subcommand) =>
+      subcommand
         .setName("deduct")
         .setDescription("Remove XP from a user")
-        .addUserOption((opt) =>
-          opt.setName("target").setDescription("The user").setRequired(true),
+        .addUserOption((option) =>
+          option.setName("target").setDescription("The user").setRequired(true),
         )
-        .addIntegerOption((opt) =>
-          opt
+        .addIntegerOption((option) =>
+          option
             .setName("amount")
             .setDescription("Amount of XP")
             .setRequired(true),

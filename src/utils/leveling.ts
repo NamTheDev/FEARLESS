@@ -1,10 +1,4 @@
-import {
-  Message,
-  GuildMember,
-  TextChannel,
-  EmbedBuilder,
-  ChannelType,
-} from "discord.js";
+import { Message, GuildMember, TextChannel, ChannelType } from "discord.js";
 import { CONFIG } from "../config";
 import db from "./database";
 
@@ -82,7 +76,9 @@ async function announceLevelUp(member: GuildMember, level: number) {
     CONFIG.CHANNELS.LEVEL_UP,
   ) as TextChannel;
   if (channel) {
-    await channel.send({ content: `<@${member.id}> has reached **Level ${level}**. GG!` });
+    await channel.send({
+      content: `<@${member.id}> has reached **Level ${level}**. GG!`,
+    });
   }
   if (level >= 10)
     await member.roles

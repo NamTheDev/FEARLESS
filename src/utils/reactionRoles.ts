@@ -1,6 +1,6 @@
 import db from "./database";
 
-export async function loadReactionRoles() {} // SQLite initialized on boot
+export async function loadReactionRoles() {}
 
 export async function addReactionRole(
   messageId: string,

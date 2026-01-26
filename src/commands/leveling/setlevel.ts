@@ -12,11 +12,14 @@ export const command: SlashCommand = {
     .setName("setlevel")
     .setDescription("Force set a user to a specific level")
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-    .addUserOption((opt) =>
-      opt.setName("target").setDescription("The user").setRequired(true),
+    .addUserOption((option) =>
+      option.setName("target").setDescription("The user").setRequired(true),
     )
-    .addIntegerOption((opt) =>
-      opt.setName("level").setDescription("The level to set").setRequired(true),
+    .addIntegerOption((option) =>
+      option
+        .setName("level")
+        .setDescription("The level to set")
+        .setRequired(true),
     ),
 
   execute: async (interaction: ChatInputCommandInteraction) => {

@@ -13,7 +13,7 @@ export const command: SlashCommand = {
     .setDescription("View the top 10 members"),
 
   execute: async (interaction: ChatInputCommandInteraction) => {
-    const topUsers = await getLeaderboard();
+    const topUsers = getLeaderboard();
 
     const embed = new EmbedBuilder()
       .setTitle("🏆 Server Leaderboard")

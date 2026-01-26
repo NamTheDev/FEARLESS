@@ -4,7 +4,7 @@ import {
   EmbedBuilder,
   Colors,
 } from "discord.js";
-import { SlashCommand } from "../../types";
+import { SlashCommand, UserData } from "../../types";
 import { getUserData, getUserRank } from "../../utils/leveling";
 
 export const command: SlashCommand = {
@@ -21,10 +21,13 @@ export const command: SlashCommand = {
   execute: async (interaction: ChatInputCommandInteraction) => {
     const target = interaction.options.getUser("target") || interaction.user;
 
-    const [data, rank] = await Promise.all([
+    const [firstEntry, secondEntry] = await Promise.all([
       getUserData(target.id),
       getUserRank(target.id),
     ]);
+
+    const data = firstEntry as UserData | null;
+    const rank = secondEntry as number | null;
 
     const embed = new EmbedBuilder()
       .setColor(Colors.DarkRed)

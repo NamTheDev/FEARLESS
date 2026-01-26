@@ -11,17 +11,17 @@ export const command: SlashCommand = {
     .setName("reactionrole")
     .setDescription("Bind a role to an emoji on a message")
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-    .addStringOption((o) =>
-      o
+    .addStringOption((option) =>
+      option
         .setName("message_id")
         .setDescription("ID of the message")
         .setRequired(true),
     )
-    .addStringOption((o) =>
-      o.setName("emoji").setDescription("Emoji to use").setRequired(true),
+    .addStringOption((option) =>
+      option.setName("emoji").setDescription("Emoji to use").setRequired(true),
     )
-    .addRoleOption((o) =>
-      o.setName("role").setDescription("Role to grant").setRequired(true),
+    .addRoleOption((option) =>
+      option.setName("role").setDescription("Role to grant").setRequired(true),
     ),
 
   execute: async (interaction: ChatInputCommandInteraction) => {

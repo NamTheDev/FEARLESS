@@ -24,6 +24,12 @@ export interface Giveaway {
   active: boolean;
 }
 
+export interface UserData {
+  userId: string;
+  xp: number;
+  level: number;
+}
+
 declare module "discord.js" {
   export interface Client {
     commands: Collection<string, SlashCommand>;
