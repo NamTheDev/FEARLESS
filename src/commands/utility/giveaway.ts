@@ -55,7 +55,7 @@ export const command: SlashCommand = {
       active: true,
     });
     
-    await interaction.reply('Giveaway started! 🎉')
+    await interaction.followUp('Giveaway started! 🎉')
 
     setTimeout(() => endGiveaway(msg.id, interaction.guild!), mins * 60000);
   },
