@@ -7,24 +7,23 @@ import {
 } from "discord.js";
 import { BotEvent } from "../types";
 import { sendLog } from "../utils/logger";
+import { CONFIG } from "../config";
 
 export const event: BotEvent = {
   name: Events.InteractionCreate,
   execute: async (interaction: Interaction) => {
     if (!interaction.isChatInputCommand()) return;
-
     const command = interaction.client.commands.get(interaction.commandName);
     if (!command) return;
 
     const log = new EmbedBuilder()
       .setTitle("💻 Command Used")
-      .setColor(Colors.Blue)
+      .setColor(CONFIG.COLORS.INFO)
       .addFields(
         { name: "User", value: `<@${interaction.user.id}>`, inline: true },
         { name: "Command", value: `/${interaction.commandName}`, inline: true },
       )
       .setTimestamp();
-
     if (interaction.guild) await sendLog(interaction.guild, log);
 
     try {
@@ -32,7 +31,7 @@ export const event: BotEvent = {
     } catch (e) {
       console.error(e);
       await interaction
-        .reply({ content: "Command Error.", flags: MessageFlags.Ephemeral })
+        .reply({ content: "Error", flags: MessageFlags.Ephemeral })
         .catch(() => null);
     }
   },
