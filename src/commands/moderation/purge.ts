@@ -12,7 +12,7 @@ import { sendLog } from "../../utils/logger";
 export const command: SlashCommand = {
   data: new SlashCommandBuilder()
     .setName("purge")
-    .setDescription("Bulk delete messages (Admin only)")
+    .setDescription("Bulk delete messages")
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addIntegerOption((o) =>
       o
