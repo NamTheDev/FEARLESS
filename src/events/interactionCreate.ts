@@ -6,7 +6,7 @@ import {
   Colors,
 } from "discord.js";
 import { BotEvent } from "../types";
-import { sendLog } from "../utils/logger";
+import { sendLog, sendError } from "../utils/logger";
 import { CONFIG } from "../config";
 
 export const event: BotEvent = {
@@ -29,9 +29,31 @@ export const event: BotEvent = {
     try {
       await command.execute(interaction);
     } catch (e) {
-      console.error(e);
+      // Send the error to the centralized log channel (if a guild is present)
+      if (interaction.guild) {
+        try {
+          await sendError(
+            interaction.guild,
+            e as Error,
+            "Slash Command: /" + interaction.commandName,
+          );
+        } catch {
+          // swallow sendError failures, but keep logging to console
+        }
+      } else {
+        // fallback: still log to console
+        console.error(e);
+      }
+
+      // Reply to user using a branded embed
+      const embed = new EmbedBuilder()
+        .setTitle("❌ Error")
+        .setColor(CONFIG.COLORS.ERROR)
+        .setDescription("An error occurred while executing that command.")
+        .setTimestamp();
+
       await interaction
-        .reply({ content: "Error", flags: MessageFlags.Ephemeral })
+        .reply({ embeds: [embed], flags: MessageFlags.Ephemeral })
         .catch(() => null);
     }
   },

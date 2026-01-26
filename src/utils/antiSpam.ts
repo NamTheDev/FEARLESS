@@ -11,9 +11,23 @@ export async function handleSpamCheck(message: Message): Promise<boolean> {
   const userId = message.author.id;
   const now = Date.now();
   const stamps = messageTimestamps.get(userId) || [];
-  stamps.push(now);
+
+  // Keep only recent stamps first to avoid uncontrolled growth
   const recent = stamps.filter((t) => now - t < 5000);
+  // Add the current timestamp after filtering
+  recent.push(now);
   messageTimestamps.set(userId, recent);
+
+  // Cleanup routine to prevent Map from growing indefinitely
+  if (messageTimestamps.size > 1000) {
+    const tenMinutes = 10 * 60 * 1000;
+    for (const [uid, arr] of messageTimestamps) {
+      const last = arr.length ? arr[arr.length - 1] : 0;
+      if (!last || now - last > tenMinutes) {
+        messageTimestamps.delete(uid);
+      }
+    }
+  }
 
   if (recent.length >= 5) {
     await executeSpamAction(message);

@@ -24,6 +24,14 @@ export interface Giveaway {
   active: boolean;
 }
 
+// Newly added: precise shape of the leveling table rows
+export interface LevelingRow {
+  userId: string;
+  xp: number;
+  level: number;
+  lastXpTime: number;
+}
+
 export interface UserData {
   userId: string;
   xp: number;

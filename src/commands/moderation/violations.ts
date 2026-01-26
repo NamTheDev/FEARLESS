@@ -76,7 +76,7 @@ export const command: SlashCommand = {
       const sorted = Object.entries(data)
         .filter(([_, record]) => record.offenseCount > 0)
         .sort((a, b) => b[1].offenseCount - a[1].offenseCount)
-        .slice(0, 25);
+        .slice(0, 10);
 
       if (sorted.length === 0) {
         embed.setDescription("✅ No active violations on the server.");

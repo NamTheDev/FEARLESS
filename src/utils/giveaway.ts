@@ -25,19 +25,39 @@ export function resumeGiveaways(guild: Guild) {
   const active = db
     .query("SELECT * FROM giveaways WHERE active = 1")
     .all() as any[];
-  active.forEach((g) =>
-    setTimeout(
-      () => endGiveaway(g.id, guild),
-      Math.max(0, g.endTime - Date.now()),
-    ),
-  );
+  active.forEach((g) => {
+    if (g.endTime <= Date.now()) {
+      // If the giveaway ended while offline, end it immediately
+      void endGiveaway(g.id, guild);
+    } else {
+      setTimeout(
+        () => endGiveaway(g.id, guild),
+        Math.max(0, g.endTime - Date.now()),
+      );
+    }
+  });
 }
 export async function endGiveaway(id: string, guild: Guild) {
   const g = getActiveGiveaway(id);
   if (!g) return;
   db.run("UPDATE giveaways SET active = 0 WHERE id = ?", [id]);
-  const channel = guild.channels.cache.get(g.channelId) as TextChannel;
+
+  // Try cache first, then fetch to handle cold caches / deleted-from-cache channels
+  let channel = guild.channels.cache.get(g.channelId) as
+    | TextChannel
+    | undefined;
+  if (!channel) {
+    try {
+      const fetched = (await guild.channels.fetch(
+        g.channelId,
+      )) as TextChannel | null;
+      if (fetched) channel = fetched;
+    } catch {
+      // failed to fetch (maybe deleted) - bail out gracefully
+    }
+  }
   if (!channel) return;
+
   const winner = pickWinner(g);
   await channel.send(
     winner
