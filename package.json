@@ -1,0 +1,22 @@
+{
+  "name": "fearless",
+  "module": "src/index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "deploy": "bun src/build/deploy-commands.ts",
+    "deploy-test": "bun src/build/deploy-commands-test.ts",
+    "reset": "bun src/build/reset-commands.ts",
+    "reset-test": "bun src/build/reset-commands-test.ts",
+    "start": "bun ."
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "discord.js": "^14.25.1"
+  }
+}
