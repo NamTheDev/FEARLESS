@@ -2,7 +2,7 @@ import { Client, TextChannel, ActionRowBuilder, ButtonBuilder, ButtonStyle, Butt
 import { CONFIG } from "@core/config";
 import { economyState } from "@core/state";
 import { getRandomInt } from "@utils/math";
-import db, { getBalanceStmt, updateBalanceStmt, updateUserItemStmt } from "@core/database";
+import db, { getBalanceStmt, updateBalanceStmt, updateInventoryStmt } from "@core/database";
 import { getBalance, subBloodern, subGorelith, getInventory } from "@logic/economy";
 import { buildShopEmbed } from "@utils/messages";
 import { adjustXp } from "@logic/leveling";
@@ -126,7 +126,7 @@ export async function handleMerchantInteraction(interaction: ButtonInteraction) 
 
     const inventory = getInventory(userId);
     const count = inventory.find(i => i.itemKey === itemKey)?.count || 0;
-    updateUserItemStmt.run(userId, itemKey, count + 1, 0);
+    updateInventoryStmt.run(userId, itemKey, 1);
 
     if (item.minStock && item.maxStock) {
       const newEmbed = buildShopEmbed(CONFIG.LOGIC.ECONOMY.MERCHANT_ITEMS, getMerchantStock, economyState.merchantExpiry!, true);
