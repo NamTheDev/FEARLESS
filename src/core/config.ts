@@ -267,6 +267,7 @@ export const CONFIG = {
           maxStock: 3,
           emoji: "🕷️",
           isGorelith: true,
+          isInventoryItem: true,
           duration: 2 * 60 * 60,
         },
         potion_ruthless: {
@@ -276,6 +277,7 @@ export const CONFIG = {
           maxStock: 3,
           emoji: "🔪",
           isGorelith: true,
+          isInventoryItem: true,
           duration: 2 * 60 * 60,
         },
         bloodtrace_device: {
@@ -284,6 +286,7 @@ export const CONFIG = {
           limit: 1,
           emoji: "🩸",
           isGorelith: true,
+          isInventoryItem: true,
         },
         hemovision_core: {
           name: "Hemovision Core",
@@ -291,6 +294,7 @@ export const CONFIG = {
           limit: 1,
           emoji: "🫀",
           isGorelith: true,
+          isInventoryItem: true,
         },
       },
     },

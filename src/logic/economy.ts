@@ -555,10 +555,16 @@ export async function handleEconomyInteraction(interaction: ButtonInteraction) {
     const itemKey = parts[3];
     
     if (userId && itemKey) {
+        const shopItems = CONFIG.LOGIC.ECONOMY.SHOP_ITEMS as any;
+        const merchantItems = CONFIG.LOGIC.ECONOMY.MERCHANT_ITEMS as any;
+        const item = shopItems[itemKey] || merchantItems[itemKey];
+
         db.transaction(() => {
           const pendingItem = db.prepare("SELECT count FROM purchases WHERE userId = ? AND itemKey = ?").get(userId, itemKey) as { count: number } | undefined;
           if (pendingItem) {
-            updateInventoryStmt.run(userId, itemKey, pendingItem.count);
+            if (item && item.isInventoryItem) {
+              updateInventoryStmt.run(userId, itemKey, pendingItem.count);
+            }
             db.prepare("DELETE FROM purchases WHERE userId = ? AND itemKey = ?").run(userId, itemKey);
           }
         })();
