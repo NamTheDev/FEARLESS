@@ -1,7 +1,4 @@
-import {
-  SlashCommandBuilder,
-  ChatInputCommandInteraction,
-} from "discord.js";
+import { SlashCommandBuilder, ChatInputCommandInteraction } from "discord.js";
 import { SlashCommand } from "@typings/SlashCommand";
 import { getChangelogs } from "@logic/changelog";
 import { Responder } from "@utils/responder";
@@ -28,7 +25,7 @@ export const command: SlashCommand = {
       logs.length,
     );
 
-    await interaction.reply({
+    await Responder.reply(interaction, {
       embeds: [embed],
       components: [buildChangelogButtons(index, logs.length)],
     });

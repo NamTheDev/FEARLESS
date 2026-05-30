@@ -27,7 +27,7 @@ export const command: SlashCommand = {
     
     const embed = buildAfkEmbed(reason);
       
-    await message.reply({ embeds: [embed] });
+    await Responder.reply(message, { embeds: [embed] });
   },
 };
 
