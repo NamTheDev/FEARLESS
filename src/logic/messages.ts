@@ -13,8 +13,5 @@ export const handleChannelMessages = async (message: Message) => {
         await message.channel.send(response);
       }
       break;
-    case CONFIG.CHANNELS.VERIFY:
-      message.delete();
-      break;
   }
 };

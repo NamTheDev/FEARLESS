@@ -38,7 +38,10 @@ try {
 
 
 db.run(
-  `CREATE TABLE IF NOT EXISTS user_items (userId TEXT, itemKey TEXT, count INTEGER, pending INTEGER DEFAULT 0, PRIMARY KEY (userId, itemKey, pending))`,
+  `CREATE TABLE IF NOT EXISTS inventory (userId TEXT, itemKey TEXT, count INTEGER, PRIMARY KEY (userId, itemKey))`,
+);
+db.run(
+  `CREATE TABLE IF NOT EXISTS purchases (userId TEXT, itemKey TEXT, count INTEGER, PRIMARY KEY (userId, itemKey))`,
 );
 
 export const upsertLevelStmt = db.prepare(
@@ -61,12 +64,20 @@ export const updateBuffsStmt = db.prepare(
   "INSERT INTO active_buffs (userId, xpMultiplier, moneyMultiplier, expiry) VALUES (?, ?, ?, ?) ON CONFLICT(userId) DO UPDATE SET xpMultiplier = excluded.xpMultiplier, moneyMultiplier = excluded.moneyMultiplier, expiry = excluded.expiry",
 );
 
-export const getUserItemsStmt = db.prepare(
-  "SELECT itemKey, count, pending FROM user_items WHERE userId = ?",
+export const getUserInventoryStmt = db.prepare(
+  "SELECT itemKey, count FROM inventory WHERE userId = ?",
 );
 
-export const updateUserItemStmt = db.prepare(
-  "INSERT INTO user_items (userId, itemKey, count, pending) VALUES (?, ?, ?, ?) ON CONFLICT(userId, itemKey, pending) DO UPDATE SET count = excluded.count",
+export const getPurchasesStmt = db.prepare(
+  "SELECT itemKey, count FROM purchases WHERE userId = ?",
+);
+
+export const updateInventoryStmt = db.prepare(
+  "INSERT INTO inventory (userId, itemKey, count) VALUES (?, ?, ?) ON CONFLICT(userId, itemKey) DO UPDATE SET count = count + excluded.count",
+);
+
+export const updatePurchasesStmt = db.prepare(
+  "INSERT INTO purchases (userId, itemKey, count) VALUES (?, ?, ?) ON CONFLICT(userId, itemKey) DO UPDATE SET count = count + excluded.count",
 );
 
 export default db;

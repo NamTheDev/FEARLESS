@@ -3,8 +3,10 @@ import db, {
   updateBalanceStmt,
   getBuffsStmt,
   updateBuffsStmt,
-  getUserItemsStmt,
-  updateUserItemStmt,
+  getUserInventoryStmt,
+  getPurchasesStmt,
+  updateInventoryStmt,
+  updatePurchasesStmt,
 } from "@core/database";
 import { CONFIG } from "@core/config";
 import { economyState } from "@core/state";
@@ -74,23 +76,13 @@ export function subGorelith(userId: string, amount: number): boolean {
 export function getInventory(
   userId: string,
 ): { itemKey: string; count: number }[] {
-  const res = getUserItemsStmt.all(userId) as {
-    itemKey: string;
-    count: number;
-    pending: number;
-  }[];
-  return res.filter((i) => i.pending === 0);
+  return getUserInventoryStmt.all(userId) as { itemKey: string; count: number }[];
 }
 
 export function getPurchasedItems(
   userId: string,
 ): { itemKey: string; count: number }[] {
-  const res = getUserItemsStmt.all(userId) as {
-    itemKey: string;
-    count: number;
-    pending: number;
-  }[];
-  return res.filter((i) => i.pending === 1);
+  return getPurchasesStmt.all(userId) as { itemKey: string; count: number }[];
 }
 
 export function getShopStock(itemKey: string): number {
@@ -151,7 +143,11 @@ export function buyItem(
   }
 
   const isPassive = !item.duration && !item.isGorelith;
-  updateUserItemStmt.run(userId, itemKey, currentCount + 1, isPassive ? 1 : 0);
+  if (isPassive) {
+    updatePurchasesStmt.run(userId, itemKey, 1);
+  } else {
+    updateInventoryStmt.run(userId, itemKey, 1);
+  }
 
   if (isPassive && client) {
     const channel = client.channels.cache.get(
@@ -204,7 +200,7 @@ export function generateReceipt(userId: string): {
     })
     .join("\n");
 
-  db.prepare("DELETE FROM user_items WHERE userId = ? AND pending = 1").run(
+  db.prepare("DELETE FROM purchases WHERE userId = ?").run(
     userId,
   );
   return { itemsList, totalSpentBloodern, totalSpentGorelith, totalXp };
@@ -222,12 +218,12 @@ export function useItem(
   if (itemKey === "potion_fearless") {
     const expiry = Math.floor(Date.now() / 1000) + 7200;
     updateBuffsStmt.run(userId, 1.2, 1.0, expiry);
-    updateUserItemStmt.run(userId, itemKey, item.count - 1, 0);
+    updateInventoryStmt.run(userId, itemKey, -1);
     return { success: true, message: "✅ Used Potion of Fearless." };
   } else if (itemKey === "potion_ruthless") {
     const expiry = Math.floor(Date.now() / 1000) + 7200;
     updateBuffsStmt.run(userId, 1.0, 1.2, expiry);
-    updateUserItemStmt.run(userId, itemKey, item.count - 1, 0);
+    updateInventoryStmt.run(userId, itemKey, -1);
     return { success: true, message: "✅ Used Potion of Ruthless." };
   }
   return { success: false, message: "❌ Non-usable." };
@@ -559,7 +555,13 @@ export async function handleEconomyInteraction(interaction: ButtonInteraction) {
     const itemKey = parts[3];
     
     if (userId && itemKey) {
-        db.prepare("UPDATE user_items SET pending = 0 WHERE userId = ? AND itemKey = ? AND pending = 1").run(userId, itemKey);
+        db.transaction(() => {
+          const pendingItem = db.prepare("SELECT count FROM purchases WHERE userId = ? AND itemKey = ?").get(userId, itemKey) as { count: number } | undefined;
+          if (pendingItem) {
+            updateInventoryStmt.run(userId, itemKey, pendingItem.count);
+            db.prepare("DELETE FROM purchases WHERE userId = ? AND itemKey = ?").run(userId, itemKey);
+          }
+        })();
         await interaction.update({ content: `✅ Purchase approved for <@${userId}>`, embeds: [], components: [] });
     }
     return;

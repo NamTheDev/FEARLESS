@@ -4,11 +4,12 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "deploy": "bun src/build/deploy-commands.ts",
-    "deploy-test": "bun src/build/deploy-commands-test.ts",
-    "reset": "bun src/build/reset-commands.ts",
-    "reset-test": "bun src/build/reset-commands-test.ts",
-    "start": "bun ."
+    "deploy": "bun scripts/deploy-commands.ts",
+    "deploy-test": "bun scripts/deploy-commands-test.ts",
+    "reset": "bun scripts/reset-commands.ts",
+    "reset-test": "bun scripts/reset-commands-test.ts",
+    "start": "bun .",
+    "dev": "APP_ENV=test bun ."
   },
   "devDependencies": {
     "@types/bun": "latest"

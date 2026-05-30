@@ -12,8 +12,6 @@ const { ONE_HOUR, TEN_MINUTES, XP_COOLDOWN, LEVEL_XP_RATIO } =
 export async function addXp(message: Message) {
   if (
     message.channel.type !== ChannelType.GuildText ||
-    (CONFIG.CHANNELS.COMMUNITY_CATEGORY &&
-      message.channel.parentId !== CONFIG.CHANNELS.COMMUNITY_CATEGORY) ||
     !message.guild
   )
     return;

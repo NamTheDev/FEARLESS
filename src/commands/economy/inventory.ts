@@ -1,9 +1,9 @@
 import { EmbedBuilder, Message } from "discord.js";
 import { SlashCommand } from "@typings/SlashCommand";
-import { getInventory, useItem } from "@logic/economy";
+import { useItem } from "@logic/economy";
 import { CONFIG } from "@core/config";
 import { formatInventory } from "@utils/messages";
-import { getUserItemsStmt } from "@core/database";
+import { getUserInventoryStmt } from "@core/database";
 
 export const command: SlashCommand = {
     data: {
@@ -37,18 +37,16 @@ export const command: SlashCommand = {
                 break;
             }
             default: {
-                const items = getUserItemsStmt.all(userId) as {
+                const items = getUserInventoryStmt.all(userId) as {
                     itemKey: string;
                     count: number;
-                    pending: number;
                 }[];
-                const active = items.filter((i) => i.pending === 0);
                 const embed = new EmbedBuilder()
                     .setTitle(`🎒 ${message.author.username}'s Inventory`)
                     .setColor(CONFIG.COLORS.DEFAULT)
                     .setDescription("-# Need help? Run `rf inventory help`")
                     .addFields(
-                        { name: "Items", value: formatInventory(active) || "None", inline: false }
+                        { name: "Items", value: formatInventory(items) || "None", inline: false }
                     );
                 await message.reply({ embeds: [embed] });
             }

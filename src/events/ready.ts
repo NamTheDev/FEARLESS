@@ -17,7 +17,7 @@ export const event: BotEvent = {
     loadAfkCache();
     startLootSpawner(client);
     startShopSpawner(client);
-    // const { startMerchantLoop } = await import("@logic/merchant");
-    // startMerchantLoop(client);
+    const { startMerchantLoop } = await import("@logic/merchant");
+    startMerchantLoop(client);
   },
 };

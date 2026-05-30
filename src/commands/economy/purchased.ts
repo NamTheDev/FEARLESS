@@ -1,7 +1,7 @@
 import { Message, SlashCommandBuilder, EmbedBuilder } from "discord.js";
 import { SlashCommand } from "@typings/SlashCommand";
 import { CONFIG } from "@core/config";
-import { getUserItemsStmt } from "@core/database";
+import { getPurchasesStmt } from "@core/database";
 
 export const command: SlashCommand = {
   data: new SlashCommandBuilder()
@@ -11,11 +11,10 @@ export const command: SlashCommand = {
   messageOnly: true,
   executeMessage: async (message: Message) => {
     const userId = message.author.id;
-    const items = getUserItemsStmt.all(userId) as { itemKey: string, count: number, pending: number }[];
+    const items = getPurchasesStmt.all(userId) as { itemKey: string, count: number }[];
     const shop = CONFIG.LOGIC.ECONOMY.SHOP_ITEMS as any;
 
     const list = items
-        .filter(i => i.pending === 1)
         .map(i => `**${shop[i.itemKey]?.name || i.itemKey}**: ${i.count}x`)
         .join("\n");
 
