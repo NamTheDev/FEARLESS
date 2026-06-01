@@ -150,10 +150,10 @@ export function buyItem(
   }
 
   if (isPassive && client) {
-    const channel = client.channels.cache.get(
-      CONFIG.CHANNELS.PURCHASES,
-    ) as TextChannel;
-    if (channel) {
+    const channel = await client.channels
+      .fetch(CONFIG.CHANNELS.PURCHASES)
+      .catch(() => null);
+    if (channel instanceof TextChannel) {
       const embed = buildPurchaseApprovalEmbed(userId, item.name);
       const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
         new ButtonBuilder()
