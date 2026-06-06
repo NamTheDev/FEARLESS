@@ -18,13 +18,30 @@ export const event: BotEvent = {
     )
       return;
 
-    if (message.content.toLowerCase().startsWith("rf ") || message.content.toLowerCase().startsWith("rh ")) {
+    if (message.content.toLowerCase().startsWith("rf ")) {
       const args = message.content.slice(3).trim().split(/ +/);
       const commandName = args.shift()?.toLowerCase();
-      
       if (commandName) {
         const command = message.client.commands.get(commandName);
-        if (command && command.executeMessage) {
+        if (command && command.executeMessage && command.category !== "summer") {
+          try {
+            await handleCommandLog(message, commandName, args);
+            await command.executeMessage(message, args);
+          } catch (error) {
+            console.error(error);
+            await message.reply("❌ Error executing command.");
+          }
+          return;
+        }
+      }
+    }
+
+    if (message.content.toLowerCase().startsWith("rh ")) {
+      const args = message.content.slice(3).trim().split(/ +/);
+      const commandName = args.shift()?.toLowerCase();
+      if (commandName) {
+        const command = message.client.commands.get(commandName);
+        if (command && command.executeMessage && command.category === "summer") {
           try {
             await handleCommandLog(message, commandName, args);
             await command.executeMessage(message, args);
