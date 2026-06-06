@@ -3,6 +3,7 @@ import db from "@core/database";
 
 export const command = {
   data: { name: "buy" },
+  category: "summer",
   async executeMessage(message: any, args: string[]) {
     const item = args[0];
     const costs = { bucket: 3, water: 2, splash: 2, rebuild: 1 };

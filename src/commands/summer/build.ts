@@ -2,6 +2,7 @@ import { getCastle, updateCastle, getShellite } from "@logic/economy";
 
 export const command = {
   data: { name: "build" },
+  category: "summer",
   async executeMessage(message: any) {
     const uid = message.author.id;
     const shellite = getShellite(uid);

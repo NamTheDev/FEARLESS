@@ -2,6 +2,7 @@ import { getShellite, getCastle, updateCastle } from "@logic/economy";
 
 export const command = {
   data: { name: "splash" },
+  category: "summer",
   async executeMessage(message: any, args: string[]) {
     const target = message.mentions.users.first();
     if (!target) return message.reply("Mention user to splash.");

@@ -3,6 +3,7 @@ import db from "@core/database";
 
 export const command = {
   data: { name: "sell" },
+  category: "summer",
   async executeMessage(message: any) {
     const castle = getCastle(message.author.id) as any;
     if (!castle) return message.reply("No castle to sell.");

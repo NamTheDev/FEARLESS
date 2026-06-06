@@ -3,6 +3,7 @@ import db from "@core/database";
 
 export const command = {
   data: { name: "give" },
+  category: "summer",
   async executeMessage(message: any, args: string[]) {
     if (!message.member?.permissions.has(PermissionFlagsBits.ManageGuild)) return message.reply("Unauthorized.");
     const target = message.mentions.users.first();
