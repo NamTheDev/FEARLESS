@@ -14,5 +14,14 @@ export default {
     const newStage = (castle?.stage ?? 0) + 1;
     updateCastle(uid, newStage, (castle?.health ?? 0) + 10);
     interaction.reply(`Built castle stage ${newStage}!`);
+  },
+  async executeMessage(message: any) {
+    const uid = message.author.id;
+    const shellite = getShellite(uid);
+    if (shellite < 1) return message.reply("Need shellite to build.");
+    const castle = getCastle(uid) as any;
+    const newStage = (castle?.stage ?? 0) + 1;
+    updateCastle(uid, newStage, (castle?.health ?? 0) + 10);
+    message.reply(`Built castle stage ${newStage}!`);
   }
 };

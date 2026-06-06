@@ -18,7 +18,7 @@ export const event: BotEvent = {
     )
       return;
 
-    if (message.content.toLowerCase().startsWith("rf ")) {
+    if (message.content.toLowerCase().startsWith("rf ") || message.content.toLowerCase().startsWith("rh ")) {
       const args = message.content.slice(3).trim().split(/ +/);
       const commandName = args.shift()?.toLowerCase();
       
