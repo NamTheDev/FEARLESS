@@ -19,6 +19,7 @@ import {
   ButtonStyle,
   ButtonInteraction,
   MessageFlags,
+  EmbedBuilder,
 } from "discord.js";
 import { join } from "node:path";
 import { getRandomInt } from "@utils/math";
@@ -33,6 +34,33 @@ import {
 export function getBalance(userId: string): number {
   const res = getBalanceStmt.get(userId) as { bloodern: number } | undefined;
   return res?.bloodern || 0;
+}
+
+export function getShellite(userId: string): number {
+  const res = db.query("SELECT shellite FROM economy WHERE userId = ?").get(userId) as { shellite: number } | undefined;
+  return res?.shellite || 0;
+}
+
+export function convertToShellite(userId: string): { success: boolean, message: string } {
+  const res = getBalanceStmt.get(userId) as { bloodern: number, gorelith: number, shellite: number } | undefined;
+  if (!res || res.bloodern < 2500) return { success: false, message: "Need 2500 Bloodern." };
+  db.run("UPDATE economy SET bloodern = bloodern - 2500, shellite = shellite + 1 WHERE userId = ?", [userId]);
+  return { success: true, message: "Converted 2500 Bloodern to 1 Shellite!" };
+}
+
+export function convertToGorelith(userId: string): { success: boolean, message: string } {
+  const res = getBalanceStmt.get(userId) as { bloodern: number, gorelith: number } | undefined;
+  if (!res || res.bloodern < 5000) return { success: false, message: "Need 5000 Bloodern." };
+  db.run("UPDATE economy SET bloodern = bloodern - 5000, gorelith = gorelith + 1 WHERE userId = ?", [userId]);
+  return { success: true, message: "Converted 5000 Bloodern to 1 Gorelith!" };
+}
+
+export function getCastle(userId: string) {
+  return db.query("SELECT * FROM castles WHERE userId = ?").get(userId);
+}
+
+export function updateCastle(userId: string, stage: number, health: number) {
+  db.run("INSERT INTO castles (userId, stage, health) VALUES (?, ?, ?) ON CONFLICT(userId) DO UPDATE SET stage = excluded.stage, health = excluded.health", [userId, stage, health]);
 }
 
 export function getEconomyLeaderboard(): Array<[string, number]> {
@@ -100,11 +128,11 @@ export function refreshShopStock() {
   }
 }
 
-export function buyItem(
+export async function buyItem(
   userId: string,
   itemKey: string,
   client?: Client,
-): { success: boolean; message: string } {
+): Promise<{ success: boolean; message: string }> {
   const shopItems = CONFIG.LOGIC.ECONOMY.SHOP_ITEMS as any;
   const merchantItems = CONFIG.LOGIC.ECONOMY.MERCHANT_ITEMS as any;
   const item = shopItems[itemKey] || merchantItems[itemKey];
@@ -322,72 +350,28 @@ export async function spawnShop(channel: TextChannel) {
 
   const shopItems = CONFIG.LOGIC.ECONOMY.SHOP_ITEMS as any;
   const { SHOP_DURATION } = CONFIG.LOGIC.ECONOMY;
-  economyState.shopExpiryTimestamp =
-    Math.floor(Date.now() / 1000) + SHOP_DURATION;
+  economyState.shopExpiryTimestamp = Math.floor(Date.now() / 1000) + SHOP_DURATION;
 
-  const embed = buildShopEmbed(
-    shopItems,
-    getShopStock,
-    economyState.shopExpiryTimestamp,
+  const embed = new EmbedBuilder()
+    .setTitle("Summer Shop 🏝️ ☀️")
+    .setDescription("Buy items or convert currency!")
+    .setColor(0x0099ff)
+    .addFields(
+      { name: "🪣 Bucket (3 Shellite)", value: "Build castle" },
+      { name: "💧 Water (2 Shellite)", value: "Shape castle" },
+      { name: "🌊 Splash (2 Shellite)", value: "Damage castle" },
+      { name: "⚙️ Rebuild (1 Shellite)", value: "Fix damage" },
+      { name: "Convert", value: "2.5k Bloodern -> 1 Shellite\n5k Bloodern -> 1 Gorelith" }
+    );
+
+  const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder().setCustomId("shop_convert_shellite").setLabel("Convert Shellite").setStyle(ButtonStyle.Primary),
+    new ButtonBuilder().setCustomId("shop_convert_gorelith").setLabel("Convert Gorelith").setStyle(ButtonStyle.Primary)
   );
 
-  const row1 = new ActionRowBuilder<ButtonBuilder>().addComponents(
-    new ButtonBuilder()
-      .setCustomId("shop_buy_namechange")
-      .setLabel("Buy Namechange Perm")
-      .setStyle(ButtonStyle.Primary),
-    new ButtonBuilder()
-      .setCustomId("shop_buy_poll")
-      .setLabel("Buy Poll Perm")
-      .setStyle(ButtonStyle.Primary),
-    new ButtonBuilder()
-      .setCustomId("shop_buy_image")
-      .setLabel("Buy Image Perm")
-      .setStyle(ButtonStyle.Primary),
-  );
-
-  const row2 = new ActionRowBuilder<ButtonBuilder>().addComponents(
-    new ButtonBuilder()
-      .setCustomId("shop_buy_xp100")
-      .setLabel("100 XP")
-      .setStyle(ButtonStyle.Danger),
-    new ButtonBuilder()
-      .setCustomId("shop_buy_xp250")
-      .setLabel("250 XP")
-      .setStyle(ButtonStyle.Danger),
-    new ButtonBuilder()
-      .setCustomId("shop_buy_xp350")
-      .setLabel("350 XP")
-      .setStyle(ButtonStyle.Danger),
-    new ButtonBuilder()
-      .setCustomId("shop_buy_xp500")
-      .setLabel("500 XP")
-      .setStyle(ButtonStyle.Danger),
-    new ButtonBuilder()
-      .setCustomId("shop_user_inventory")
-      .setLabel("My Inventory")
-      .setStyle(ButtonStyle.Secondary),
-  );
-
-  const row3 = new ActionRowBuilder<ButtonBuilder>().addComponents(
-    new ButtonBuilder()
-      .setCustomId("shop_balance")
-      .setLabel("Check Balance")
-      .setStyle(ButtonStyle.Secondary),
-  );
-
-  const msg = await channel.send({
-    embeds: [embed],
-    components: [row1, row2, row3],
-  });
-
+  const msg = await channel.send({ embeds: [embed], components: [row] });
   economyState.activeShopMessageId = msg.id;
-
-  setTimeout(() => {
-    msg.delete().catch(() => {});
-    economyState.activeShopMessageId = null;
-    economyState.shopExpiryTimestamp = null;
-  }, SHOP_DURATION * 1000);
+  setTimeout(() => msg.delete().catch(() => {}), SHOP_DURATION * 1000);
 }
 
 export function startShopSpawner(client: Client) {
@@ -496,11 +480,13 @@ export async function handleEconomyInteraction(interaction: ButtonInteraction) {
       });
     }
 
-    if (customId === "shop_balance") {
-      return await interaction.reply({
-        content: `💰 Your current balance is: **${getBalance(interaction.user.id)}** bloodern.`,
-        flags: MessageFlags.Ephemeral,
-      });
+    if (customId === "shop_convert_shellite") {
+      const res = convertToShellite(interaction.user.id);
+      return await interaction.reply({ content: res.message, flags: MessageFlags.Ephemeral });
+    }
+    if (customId === "shop_convert_gorelith") {
+      const res = convertToGorelith(interaction.user.id);
+      return await interaction.reply({ content: res.message, flags: MessageFlags.Ephemeral });
     }
 
     if (customId === "shop_user_inventory") {
@@ -516,7 +502,7 @@ export async function handleEconomyInteraction(interaction: ButtonInteraction) {
     }
 
     const itemKey = customId.replace("shop_buy_", "");
-    const result = buyItem(interaction.user.id, itemKey, interaction.client);
+    const result = await buyItem(interaction.user.id, itemKey, interaction.client);
 
     if (result.success) {
       const shopItem = (CONFIG.LOGIC.ECONOMY.SHOP_ITEMS as any)[itemKey];

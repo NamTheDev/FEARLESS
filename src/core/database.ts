@@ -25,7 +25,11 @@ db.run(
 );
 
 db.run(
-  `CREATE TABLE IF NOT EXISTS economy (userId TEXT PRIMARY KEY, bloodern INTEGER DEFAULT 0, gorelith INTEGER DEFAULT 0)`,
+  `CREATE TABLE IF NOT EXISTS economy (userId TEXT PRIMARY KEY, bloodern INTEGER DEFAULT 0, gorelith INTEGER DEFAULT 0, shellite INTEGER DEFAULT 0)`,
+);
+
+db.run(
+  `CREATE TABLE IF NOT EXISTS castles (userId TEXT PRIMARY KEY, stage INTEGER DEFAULT 0, health INTEGER DEFAULT 0)`,
 );
 
 db.run(
