@@ -1,8 +1,10 @@
 import {
-  ChatInputCommandInteraction,
-  EmbedBuilder,
-  Message,
-  MessageFlags,
+    ChatInputCommandInteraction,
+    EmbedBuilder,
+    Message,
+    MessageFlags,
+    TextChannel,
+    WebhookClient,
 } from "discord.js";
 import { CONFIG } from "@core/config";
 import { handleSystemErrorLog } from "@logic/logging";
@@ -10,60 +12,76 @@ import { handleSystemErrorLog } from "@logic/logging";
 export type InteractionOrMessage = ChatInputCommandInteraction | Message;
 
 export const Responder = {
-  success: async (
-    target: InteractionOrMessage,
-    message: string,
-    ephemeral = false,
-  ) => {
-    const embed = new EmbedBuilder()
-      .setDescription(`✅ ${message}`)
-      .setColor(CONFIG.COLORS.SUCCESS);
+    success: async (
+        target: InteractionOrMessage,
+        message: string,
+        ephemeral = false,
+    ) => {
+        const embed = new EmbedBuilder()
+            .setDescription(`✅ ${message}`)
+            .setColor(CONFIG.COLORS.SUCCESS);
 
-    const flags = ephemeral ? MessageFlags.Ephemeral : undefined;
+        const flags = ephemeral ? MessageFlags.Ephemeral : undefined;
 
-    return await Responder.reply(target, {
-      embeds: [embed],
-      flags,
-    });
-  },
+        return await Responder.reply(target, {
+            embeds: [embed],
+            flags,
+        });
+    },
 
-  error: async (
-    target: InteractionOrMessage,
-    error: string | Error,
-    ephemeral = false,
-  ) => {
-    const errorMessage = typeof error === "string" ? error : error.message;
+    error: async (
+        target: InteractionOrMessage,
+        error: string | Error,
+        ephemeral = false,
+    ) => {
+        const errorMessage = typeof error === "string" ? error : error.message;
 
-    const embed = new EmbedBuilder()
-      .setTitle("❌ Action Failed")
-      .setDescription(errorMessage)
-      .setColor(CONFIG.COLORS.ERROR);
+        const embed = new EmbedBuilder()
+            .setTitle("❌ Action Failed")
+            .setDescription(errorMessage)
+            .setColor(CONFIG.COLORS.ERROR);
 
-    const flags = ephemeral ? MessageFlags.Ephemeral : undefined;
+        const flags = ephemeral ? MessageFlags.Ephemeral : undefined;
 
-    if (error instanceof Error && target.guild) {
-      const context = "commandName" in target ? `/ ${target.commandName}` : "Message Command";
-      await handleSystemErrorLog(target.guild, error, context);
-    }
-
-    return await Responder.reply(target, {
-      embeds: [embed],
-      flags,
-    });
-  },
-
-  reply: async (target: InteractionOrMessage, payload: any) => {
-    try {
-      if ("commandName" in target) {
-        if (target.replied || target.deferred) {
-          return await target.editReply(payload);
+        if (error instanceof Error && target.guild) {
+            const context =
+                "commandName" in target
+                    ? `/ ${target.commandName}`
+                    : "Message Command";
+            await handleSystemErrorLog(target.guild, error, context);
         }
-        return await target.reply(payload);
-      }
-      return await target.reply(payload);
-    } catch (e: any) {
-      if (e.code === 10008 || e.code === 40060 || e.code === 10015) return null;
-      throw e;
-    }
-  },
+
+        return await Responder.reply(target, {
+            embeds: [embed],
+            flags,
+        });
+    },
+
+    webhook: async (url: string, channel: TextChannel, payload: any) => {
+        const webhook = new WebhookClient({ url });
+        try {
+            await webhook.send({
+                ...payload,
+            });
+        } catch (e: any) {
+            if (e.code === 10015) return null;
+            throw e;
+        }
+    },
+
+    reply: async (target: InteractionOrMessage, payload: any) => {
+        try {
+            if ("commandName" in target) {
+                if (target.replied || target.deferred) {
+                    return await target.editReply(payload);
+                }
+                return await target.reply(payload);
+            }
+            return await target.reply(payload);
+        } catch (e: any) {
+            if (e.code === 10008 || e.code === 40060 || e.code === 10015)
+                return null;
+            throw e;
+        }
+    },
 };
