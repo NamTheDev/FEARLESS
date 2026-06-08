@@ -1,6 +1,6 @@
 import { Events, Message, Collection, Snowflake, GuildTextBasedChannel } from "discord.js";
 import { BotEvent } from "@typings/BotEvent";
-import { handleMessageDeleteLog, handleMessageUpdateLog, handleMessageBulkDeleteLog } from "@logic/messageLogging";
+import { handleMessageDeleteLog, handleMessageUpdateLog, handleMessageBulkDeleteLog } from "@logic/logging";
 
 export const event: BotEvent = {
   name: Events.MessageDelete,

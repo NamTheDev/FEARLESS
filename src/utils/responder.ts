@@ -52,16 +52,6 @@ export const Responder = {
     });
   },
 
-  update75: async (target: InteractionOrMessage, title: string, desc: string) => {
-    const embed = new EmbedBuilder()
-      .setTitle(`🩸 Update 7.5: ${title}`)
-      .setDescription(desc)
-      .setColor(0x8B0000)
-      .setTimestamp();
-
-    return await Responder.reply(target, { embeds: [embed] });
-  },
-
   reply: async (target: InteractionOrMessage, payload: any) => {
     try {
       if ("commandName" in target) {

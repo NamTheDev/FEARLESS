@@ -1,6 +1,6 @@
 import { Events, GuildChannel } from "discord.js";
 import { BotEvent } from "@typings/BotEvent";
-import { handleChannelCreateLog, handleChannelDeleteLog } from "@logic/systemLogging";
+import { handleChannelCreateLog, handleChannelDeleteLog } from "@logic/logging";
 
 export const event: BotEvent = {
   name: Events.ChannelCreate,

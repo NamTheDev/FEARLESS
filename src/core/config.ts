@@ -22,6 +22,7 @@ export const CONFIG = {
   WHITELISTED_GUILDS: [mainConfig.GUILD_ID, testConfig.GUILD_ID],
   DEVELOPER_USER_ID: mergedConfig.DEVELOPER_USER_ID,
   LOG_CHANNEL_ID: mergedConfig.LOG_CHANNEL_ID,
+  SUMMER_WEBHOOK_URL: mergedConfig.SUMMER_WEBHOOK_URL,
   CHANNELS: {
     GENERAL: mergedConfig.GENERAL_CHANNEL_ID,
     LEVEL_UP: mergedConfig.LEVEL_UP_CHANNEL_ID,
@@ -117,6 +118,7 @@ export const CONFIG = {
     ERROR: Colors.Red,
     SUCCESS: Colors.Green,
     GIVEAWAY: Colors.Gold,
+    SUMMER: 0xC2B280,
   },
   UI: {
     PAGINATION: {

@@ -1,6 +1,40 @@
-import { EmbedBuilder, Guild, ChatInputCommandInteraction, Message, ChannelType, AuditLogEvent, GuildMember, Role, GuildBan, TimestampStyles, time } from "discord.js";
+import {
+  EmbedBuilder,
+  Guild,
+  AttachmentBuilder,
+  ColorResolvable,
+  ChatInputCommandInteraction,
+  Message,
+  ChannelType,
+  AuditLogEvent,
+  GuildMember,
+  Role,
+  GuildBan,
+} from "discord.js";
+import { getChannel } from "@utils/fetchers";
 import { CONFIG } from "@core/config";
-import { createLogEmbed } from "./logger";
+
+export async function sendLog(
+  guild: Guild,
+  logChannelId: string,
+  embed: EmbedBuilder,
+  files: AttachmentBuilder[] = [],
+) {
+  const channel = await getChannel(guild, logChannelId);
+  if (!channel) return;
+  await channel.send({ embeds: [embed], files });
+}
+
+export async function createLogEmbed(
+  title: string,
+  defaultColor: ColorResolvable,
+  color?: ColorResolvable,
+) {
+  return new EmbedBuilder()
+    .setTitle(title)
+    .setColor(color || defaultColor)
+    .setTimestamp();
+}
 
 export function buildSystemErrorEmbed(error: Error, context: string) {
   return new EmbedBuilder()
@@ -13,7 +47,13 @@ export function buildSystemErrorEmbed(error: Error, context: string) {
     .setTimestamp();
 }
 
-export function buildCommandLogEmbed(user: { id: string } | null, type: string, commandName: string, channelId: string | null, args: string[] | undefined) {
+export function buildCommandLogEmbed(
+  user: { id: string } | null,
+  type: string,
+  commandName: string,
+  channelId: string | null,
+  args: string[] | undefined,
+) {
   const embed = new EmbedBuilder()
     .setTitle("💻 Command Used")
     .setColor(CONFIG.COLORS.DEFAULT)
@@ -32,7 +72,12 @@ export function buildCommandLogEmbed(user: { id: string } | null, type: string, 
   return embed;
 }
 
-export function buildMemberUpdateEmbed(member: GuildMember, executorText: string, fields: any[], color: any) {
+export function buildMemberUpdateEmbed(
+  member: GuildMember,
+  executorText: string,
+  fields: any[],
+  color: any,
+) {
   return new EmbedBuilder()
     .setTitle("👤 Member Updated")
     .setAuthor({
@@ -111,11 +156,16 @@ export function buildServerUpdateEmbed(executorId: string | undefined, fields: a
         name: "👮 Executed By",
         value: executorId ? `<@${executorId}>` : "Unknown",
       },
-      ...fields
+      ...fields,
     );
 }
 
-export function buildBanLogEmbed(tag: string, id: string, executorId: string | undefined, reason: string | null) {
+export function buildBanLogEmbed(
+  tag: string,
+  id: string,
+  executorId: string | undefined,
+  reason: string | null,
+) {
   return new EmbedBuilder()
     .setTitle("🔨 Member Banned")
     .setColor(CONFIG.COLORS.ERROR)
@@ -130,7 +180,12 @@ export function buildBanLogEmbed(tag: string, id: string, executorId: string | u
     );
 }
 
-export function buildUnbanLogEmbed(tag: string, id: string, executorId: string | undefined, reason: string | null) {
+export function buildUnbanLogEmbed(
+  tag: string,
+  id: string,
+  executorId: string | undefined,
+  reason: string | null,
+) {
   return new EmbedBuilder()
     .setTitle("🔨 Member Unbanned")
     .setColor(CONFIG.COLORS.DEFAULT)
@@ -145,7 +200,12 @@ export function buildUnbanLogEmbed(tag: string, id: string, executorId: string |
     );
 }
 
-export function buildKickLogEmbed(tag: string, id: string, executorId: string | undefined, reason: string | null) {
+export function buildKickLogEmbed(
+  tag: string,
+  id: string,
+  executorId: string | undefined,
+  reason: string | null,
+) {
   return new EmbedBuilder()
     .setTitle("🔨 Member Kicked")
     .setColor(CONFIG.COLORS.ERROR)
@@ -160,7 +220,13 @@ export function buildKickLogEmbed(tag: string, id: string, executorId: string | 
     );
 }
 
-export function buildMessageDeleteEmbed(authorId: string, channelId: string, content: string | null, longContent: boolean, embedUrls: string[]) {
+export function buildMessageDeleteEmbed(
+  authorId: string,
+  channelId: string,
+  content: string | null,
+  longContent: boolean,
+  embedUrls: string[],
+) {
   const embed = new EmbedBuilder()
     .setTitle("🗑️ Message Deleted")
     .setColor(CONFIG.COLORS.ERROR)
@@ -171,7 +237,12 @@ export function buildMessageDeleteEmbed(authorId: string, channelId: string, con
     );
 
   if (content) {
-    embed.addFields({ name: "📄 Content", value: longContent ? "*[Content too long, attached as deleted-content.md]*" : content });
+    embed.addFields({
+      name: "📄 Content",
+      value: longContent
+        ? "*[Content too long, attached as deleted-content.md]*"
+        : content,
+    });
   }
 
   if (embedUrls.length > 0) {
@@ -181,7 +252,13 @@ export function buildMessageDeleteEmbed(authorId: string, channelId: string, con
   return embed;
 }
 
-export function buildMessageEditEmbed(authorId: string, channelId: string, before: string, after: string, longContent: boolean) {
+export function buildMessageEditEmbed(
+  authorId: string,
+  channelId: string,
+  before: string,
+  after: string,
+  longContent: boolean,
+) {
   const embed = new EmbedBuilder()
     .setTitle("📝 Message Edited")
     .setColor(CONFIG.COLORS.DEFAULT)
@@ -221,4 +298,3 @@ export function buildBulkDeleteEmbed(channelId: string, count: number, executorI
       },
     );
 }
-

@@ -1,7 +1,7 @@
 import { Message, TextChannel } from "discord.js";
 import { CONFIG } from "@core/config";
 import { getChannel } from "@utils/fetchers";
-import { sendLog } from "@utils/logger";
+import { sendLog } from "@utils/logging";
 import { applySpamPunishment } from "@logic/leveling";
 import db from "@core/database";
 import { sendTempMessage, buildSpamWarningEmbed, buildSpamLogEmbed } from "@utils/messages";

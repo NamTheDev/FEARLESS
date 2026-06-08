@@ -5,7 +5,7 @@ import {
 } from "discord.js";
 
 import { SlashCommand } from "@typings/SlashCommand";
-import { sendLog } from "@utils/logger";
+import { sendLog } from "@utils/logging";
 import { Responder } from "@utils/responder";
 import { buildPurgeLogEmbed } from "@utils/messages";
 import { CONFIG } from "@core/config";

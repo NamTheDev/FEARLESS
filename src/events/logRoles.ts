@@ -1,6 +1,6 @@
 import { Events, Role } from "discord.js";
 import { BotEvent } from "@typings/BotEvent";
-import { handleRoleCreateLog, handleRoleDeleteLog } from "@logic/systemLogging";
+import { handleRoleCreateLog, handleRoleDeleteLog } from "@logic/logging";
 
 export const event: BotEvent = {
   name: Events.GuildRoleCreate,

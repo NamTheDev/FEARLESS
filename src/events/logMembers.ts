@@ -1,6 +1,6 @@
 import { Events, GuildMember } from "discord.js";
 import { BotEvent } from "@typings/BotEvent";
-import { handleMemberUpdateLog } from "@logic/memberLogging";
+import { handleMemberUpdateLog } from "@logic/logging";
 
 export const event: BotEvent = {
   name: Events.GuildMemberUpdate,

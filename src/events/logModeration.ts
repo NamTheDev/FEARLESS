@@ -1,6 +1,6 @@
 import { Events, GuildBan, GuildMember } from "discord.js";
 import { BotEvent } from "@typings/BotEvent";
-import { handleBanLog, handleUnbanLog, handleKickLog } from "@logic/systemLogging";
+import { handleBanLog, handleUnbanLog, handleKickLog } from "@logic/logging";
 
 export const banEvent: BotEvent = {
   name: Events.GuildBanAdd,
