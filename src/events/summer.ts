@@ -109,10 +109,12 @@ async function reply(channel: TextChannel, payload: any) {
 }
 
 client.on("messageCreate", async (message) => {
+    // Beta testing: Developer only access for now, will open up after testing phase
     if (
         message.author.bot ||
         !message.content.startsWith(prefix) ||
-        message.channel.type !== ChannelType.GuildText
+        message.channel.type !== ChannelType.GuildText ||
+        message.author.id !== CONFIG.DEVELOPER_USER_ID
     )
         return;
 
