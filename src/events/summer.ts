@@ -134,9 +134,8 @@ client.on("messageCreate", async (message) => {
     if (
         message.author.bot ||
         !message.content.startsWith(prefix) ||
-        message.channel.type !== ChannelType.GuildText
-        // ||
-        // message.author.id !== CONFIG.DEVELOPER_USER_ID
+        message.channel.type !== ChannelType.GuildText ||
+        message.author.id !== CONFIG.DEVELOPER_USER_ID
     )
         return;
 
