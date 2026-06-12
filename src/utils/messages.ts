@@ -514,3 +514,41 @@ export function buildHelpEmbed(commands: Map<string, SlashCommand>, page = 1) {
   return embed;
 }
 
+export function buildSummerStatEmbed(castles: any[], page: number) {
+  const embed = new EmbedBuilder().setColor(CONFIG.COLORS.SUMMER || 0xFFA500);
+
+  if (!castles || castles.length === 0) {
+    return embed
+      .setTitle("🏰 Summer Castle Stats")
+      .setDescription(
+        `💥 **Redheat**:\n> "You don't have any sandcastles yet! Use \`rh use bucket\` to build one."`
+      );
+  }
+
+  const castle = castles[page - 1];
+  if (!castle) {
+    return embed
+      .setTitle("🏰 Summer Castle Stats")
+      .setDescription(
+        `💥 **Redheat**:\n> "Castle not found for page ${page}."`
+      );
+  }
+
+  return embed
+    .setTitle("🏰 Summer Castle Stats")
+    .setDescription(
+      `💥 **Redheat**:\n> "Let's see the state of your fortress..."\n\n📄 **Stats (Castle #${page}/${castles.length})**:\n> **Evolution**: ${castle.evolution}\n> **Health**: ${castle.health} HP\n> **Damage Taken**: ${castle.damage_taken}`
+    );
+}
+
+export function buildSummerStatButtons(currentPage: number, totalPages: number) {
+  if (totalPages <= 1) return null;
+  return buildPaginationRow(
+    "summer_stat",
+    currentPage,
+    totalPages,
+    { prev: "Prev", next: "Next" },
+    true,
+  );
+}
+

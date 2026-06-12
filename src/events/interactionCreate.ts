@@ -14,7 +14,8 @@ export const event: BotEvent = {
             if (
                 interaction.customId.startsWith("help:") ||
                 interaction.customId.startsWith("changelog:") ||
-                interaction.customId.startsWith("snipe:")
+                interaction.customId.startsWith("snipe:") ||
+                interaction.customId.startsWith("summer_stat:")
             ) {
                 await handlePagination(interaction);
                 return;

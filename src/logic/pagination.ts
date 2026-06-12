@@ -4,12 +4,17 @@ import {
   buildHelpButtons,
   buildChangelogEmbed,
   buildChangelogButtons,
+  buildSummerStatEmbed,
+  buildSummerStatButtons,
 } from "@utils/messages";
 import { SlashCommand } from "@typings/SlashCommand";
 import { getChangelogs } from "@logic/changelog";
 import { parsePaginationId } from "@utils/pagination";
 import { clamp } from "@utils/math";
 import { handleSnipePagination } from "@logic/snipe";
+import { join } from "path";
+
+const summerPath = join(process.cwd(), "data", "summer.json");
 
 const HANDLERS: Record<
   string,
@@ -38,6 +43,22 @@ const HANDLERS: Record<
     });
   },
   snipe: handleSnipePagination,
+  summer_stat: async (interaction, page) => {
+    const file = Bun.file(summerPath);
+    if (await file.exists()) {
+      const data = await file.json();
+      const castles = data.castles || [];
+      const totalPages = castles.length;
+
+      const embed = buildSummerStatEmbed(castles, page);
+      const buttons = buildSummerStatButtons(page, totalPages);
+
+      await interaction.update({
+        embeds: [embed],
+        components: buttons ? [buttons] : [],
+      });
+    }
+  },
 };
 
 export const getHelpPage = (input: any): number => {

@@ -3,6 +3,7 @@ import { Responder } from "@utils/responder";
 import { ChannelType, TextChannel, EmbedBuilder } from "discord.js";
 import { join } from "path";
 import { client } from "src";
+import { buildSummerStatEmbed, buildSummerStatButtons } from "@utils/messages";
 
 const prefix = "rh ";
 const path = join(process.cwd(), "data", "summer.json");
@@ -83,6 +84,12 @@ const shopItems: Record<string, ShopItem> = {
     },
 };
 
+const typeEmojis: Record<string, string> = {
+    offense: "⚔️",
+    defense: "🛡️",
+    cosmetic: "🎨",
+};
+
 const EVOLUTION_HP = {
     1: 120,
     2: 310,
@@ -99,7 +106,21 @@ async function loadData() {
     } else {
         cachedData = await file.json();
     }
+    if (!cachedData.castles) {
+        if (cachedData.castle && cachedData.castle.evolution > 0) {
+            cachedData.castles = [cachedData.castle];
+        } else {
+            cachedData.castles = [];
+        }
+    }
     return cachedData;
+}
+
+async function saveData(data: any) {
+    if (data.castles && data.castles.length > 0) {
+        data.castle = data.castles[data.castles.length - 1];
+    }
+    await Bun.write(path, JSON.stringify(data));
 }
 
 loadData();
@@ -113,8 +134,9 @@ client.on("messageCreate", async (message) => {
     if (
         message.author.bot ||
         !message.content.startsWith(prefix) ||
-        message.channel.type !== ChannelType.GuildText ||
-        message.author.id !== CONFIG.DEVELOPER_USER_ID
+        message.channel.type !== ChannelType.GuildText
+        // ||
+        // message.author.id !== CONFIG.DEVELOPER_USER_ID
     )
         return;
 
@@ -123,6 +145,59 @@ client.on("messageCreate", async (message) => {
     const args = message.content.split(" ").slice(1);
     const command = args.shift()?.toLowerCase();
     const embed = new EmbedBuilder().setColor(CONFIG.COLORS.SUMMER);
+
+    const commandDetails: Record<
+        | "shop"
+        | "help"
+        | "tutorial"
+        | "inventory"
+        | "balance"
+        | "stat"
+        | "use"
+        | "buy",
+        { desc: string; args: string; usage: string }
+    > = {
+        shop: {
+            desc: "Browse items for your sandcastle.",
+            args: "None",
+            usage: `${prefix}shop`,
+        },
+        help: {
+            desc: "Displays details for a command or lists all available commands.",
+            args: "[command name]",
+            usage: `${prefix}help [command name]`,
+        },
+        tutorial: {
+            desc: "Full guide for newcomers to the summer event.",
+            args: "None",
+            usage: `${prefix}tutorial`,
+        },
+        inventory: {
+            desc: "See your current gear and items.",
+            args: "None",
+            usage: `${prefix}inventory`,
+        },
+        balance: {
+            desc: "Check your shellite balance.",
+            args: "None",
+            usage: `${prefix}balance`,
+        },
+        stat: {
+            desc: "Check your castle's strength and damage taken.",
+            args: "None",
+            usage: `${prefix}stat`,
+        },
+        use: {
+            desc: "Build, repair, or attack with an item.",
+            args: "<item> [amount] [@user]",
+            usage: `${prefix}use <item> [amount] [@user]`,
+        },
+        buy: {
+            desc: "Buy item from shop.",
+            args: "<item> [amount]",
+            usage: `${prefix}buy <item> [amount]`,
+        },
+    };
 
     switch (command) {
         case "shop":
@@ -136,10 +211,10 @@ client.on("messageCreate", async (message) => {
             });
 
             const shopDescription = Object.entries(groupedItems)
-                .map(
-                    ([type, items]) =>
-                        `### ${type.toUpperCase()}\n${items.join("\n")}`,
-                )
+                .map(([type, items]) => {
+                    if (!type) return "";
+                    return `- **${typeEmojis[type]} ${type.charAt(0).toUpperCase() + type.slice(1)}**\n${items.join("\n")}`;
+                })
                 .join("\n\n");
 
             return await reply(message.channel, {
@@ -148,19 +223,68 @@ client.on("messageCreate", async (message) => {
                     embed
                         .setTitle("🏝️ Summer Shop")
                         .setDescription(
-                            `💥 **Redheat**:\n> "Sunny, hot-damn day, isn't it? Perfect for building sandcastles and splashing around!"\n\n🛒 **Shop Items**:\n${shopDescription}`,
+                            `💥 **Redheat**:\n> "Sunny, hot-damn day, isn't it? Perfect for building sandcastles and splashing around!"\n\n🛒 **Shop Items**:\n\n${shopDescription}\n\n-# (Run \`${commandDetails.buy.usage}\` to purchase items from the shop.)`,
                         ),
                 ],
             });
 
         case "help":
+            const cmdName = args[0]?.toLowerCase();
+            if (cmdName) {
+                const details =
+                    commandDetails[cmdName as keyof typeof commandDetails];
+                if (details) {
+                    return await reply(message.channel, {
+                        content: `<@${message.author.id}>`,
+                        embeds: [
+                            embed
+                                .setTitle("Command info")
+                                .setDescription(
+                                    `💥 **Redheat**:\n> "Ah yes, the command works like this:"\n\n` +
+                                        `**Command**: ${cmdName}\n` +
+                                        `**Description**: ${details.desc}\n` +
+                                        `**Arguments**: ${details.args}\n` +
+                                        `**Usage**: ${details.usage}`,
+                                ),
+                        ],
+                    });
+                } else {
+                    return await reply(message.channel, {
+                        content: `<@${message.author.id}>`,
+                        embeds: [
+                            embed.setDescription(
+                                `💥 **Redheat**:\n> "I don't know that command! Try \`${prefix}help\` to see what's available."`,
+                            ),
+                        ],
+                    });
+                }
+            }
+
+            return await reply(message.channel, {
+                content: `<@${message.author.id}> - type \`${prefix}tutorial\` in case you don't know where to start!`,
+                embeds: [
+                    embed.setTitle("📜 Summer Command Guide").setDescription(
+                        `💥 **Redheat**:\n> "Ah yes, list of... whatever this is."\n\n🤖 **Commands**:\n` +
+                            Object.entries(commandDetails)
+                                .filter(([name]) => name !== "help")
+                                .map(
+                                    ([, cmd]) =>
+                                        `- \`${cmd.usage}\` - ${cmd.desc}`,
+                                )
+                                .join("\n") +
+                            `\n\n💥 **Redheat**:\n> "Oh right, just FYI, <argument> is required and [argument] is optional."\n\n-# (Use \`${commandDetails.help.usage}\` for more info of a command.)`,
+                    ),
+                ],
+            });
+
+        case "tutorial":
             return await reply(message.channel, {
                 content: `<@${message.author.id}>`,
                 embeds: [
                     embed
-                        .setTitle("📜 Summer Command Guide")
+                        .setTitle("📖 Summer Event Tutorial")
                         .setDescription(
-                            `💥 **Redheat**:\n> "Lost? Don't worry, here's how to navigate the beach!"\n\n🤖 **Commands**:\n> \`${prefix}shop\` - Browse items for your sandcastle.\n> \`${prefix}inventory\` - See your current gear.\n> \`${prefix}use <item>\` - Build, repair, or attack.\n> \`${prefix}stat\` - Check your castle's strength and debt.\n> \`${prefix}tutorial\` - Full guide for newcomers.\n\n-# (New here? Run \`${prefix}tutorial\` to start your journey!)`,
+                            `💥 **Redheat**:\n> "Welcome to the RF Summer Event 2026! Feel free to splash nukes on each other!"\n\n🔢 **Guide**\n1. Convert Bloodern to Shellite and buy items in the shop (run \`rh shop\`).\n2. Use \`rh use <item>\` to:\n- Build your first castle (Bucket + Water + Sand).\n- Repair your castle (Sand + Water).\n- Attack other players.\n3. Check your castle status and damage taken with \`rh stat\`.\n\n💥 **Redheat**:\n> "Have fun and enjoy the summer vibes!"\n\n-# (run \`${commandDetails.help.usage}\` for more command info.)`,
                         ),
                 ],
             });
@@ -184,15 +308,84 @@ client.on("messageCreate", async (message) => {
                 ],
             });
 
-        case "stat":
+        case "balance":
             return await reply(message.channel, {
                 content: `<@${message.author.id}>`,
                 embeds: [
                     embed
-                        .setTitle("🏰 Summer Castle Stats")
+                        .setTitle("💰 Shellite Balance")
                         .setDescription(
-                            `💥 **Redheat**:\n> "Let's see the state of your fortress..."\n\n📄 **Stats**:\n> **Evolution**: ${data.castle.evolution}\n> **Health**: ${data.castle.health}\n> **Damage Taken**: ${data.castle.damage_taken}`,
+                            `💥 **Redheat**:\n> "Let me check your pockets..."\n\n💰 **Balance**: **${data.balance}** shellites`,
                         ),
+                ],
+            });
+
+        case "stat":
+            const castles = data.castles || [];
+            const page = Math.max(1, castles.length);
+
+            const statEmbed = buildSummerStatEmbed(castles, page);
+            const statButtons = buildSummerStatButtons(page, castles.length);
+
+            return await reply(message.channel, {
+                content: `<@${message.author.id}>`,
+                embeds: [statEmbed],
+                components: statButtons ? [statButtons] : [],
+            });
+
+        case "buy":
+            const buyItemKey = args[0]?.toLowerCase();
+            let buyAmount = 1;
+            if (args[1] && !isNaN(Number(args[1]))) {
+                buyAmount = parseInt(args[1], 10);
+            }
+
+            if (!buyItemKey || !shopItems[buyItemKey]) {
+                return await reply(message.channel, {
+                    content: `<@${message.author.id}>`,
+                    embeds: [
+                        embed.setDescription(
+                            `💥 **Redheat**:\n> "That item is not in the shop! Check \`${prefix}shop\`."`,
+                        ),
+                    ],
+                });
+            }
+
+            if (buyAmount <= 0) {
+                return await reply(message.channel, {
+                    content: `<@${message.author.id}>`,
+                    embeds: [
+                        embed.setDescription(
+                            `💥 **Redheat**:\n> "Amount must be a positive number!"`,
+                        ),
+                    ],
+                });
+            }
+
+            const item = shopItems[buyItemKey]!;
+            const cost = item.cost * buyAmount;
+            if (data.balance < cost) {
+                return await reply(message.channel, {
+                    content: `<@${message.author.id}>`,
+                    embeds: [
+                        embed.setDescription(
+                            `💥 **Redheat**:\n> "You don't have enough shellites! You need **${cost}** shellites, but you only have **${data.balance}**."`,
+                        ),
+                    ],
+                });
+            }
+
+            data.balance -= cost;
+            data.inventory[buyItemKey as keyof typeof data.inventory] +=
+                buyAmount;
+            await saveData(data);
+
+            return await reply(message.channel, {
+                content: `<@${message.author.id}>`,
+                embeds: [
+                    embed.setDescription(
+                        `💥 **Redheat**:\n> "You bought ${buyAmount} **${item.name}** for ${cost} shellites!"`,
+                    ),
                 ],
             });
 
@@ -200,74 +393,147 @@ client.on("messageCreate", async (message) => {
             const itemKey = args[0]?.toLowerCase();
             const target = message.mentions.users.first() || message.author;
 
-            if (
-                !itemKey ||
-                !data.inventory[itemKey as keyof typeof data.inventory]
-            ) {
+            if (!itemKey || !(itemKey in data.inventory)) {
                 return await reply(message.channel, {
                     content: `<@${message.author.id}>`,
                     embeds: [
                         embed.setDescription(
-                            `You don't have that item or didn't specify one! Check \`${prefix}inventory\`.`,
+                            `💥 **Redheat**:\n> "You don't have that item or didn't specify one! Check \`${prefix}inventory\`."`,
                         ),
                     ],
                 });
             }
 
-            if (data.inventory[itemKey as keyof typeof data.inventory] <= 0) {
+            let amount = 1;
+            if (args[1] && !isNaN(Number(args[1]))) {
+                amount = parseInt(args[1], 10);
+            }
+
+            if (amount <= 0) {
                 return await reply(message.channel, {
                     content: `<@${message.author.id}>`,
                     embeds: [
-                        embed.setDescription(`You ran out of ${itemKey}!`),
+                        embed.setDescription(
+                            `💥 **Redheat**:\n> "Amount must be a positive number!"`,
+                        ),
+                    ],
+                });
+            }
+
+            if (
+                shopItems[itemKey] &&
+                shopItems[itemKey].type === "offense" &&
+                amount > SUMMER_CONFIG.ACTION_LIMIT
+            ) {
+                return await reply(message.channel, {
+                    content: `<@${message.author.id}>`,
+                    embeds: [
+                        embed.setDescription(
+                            `💥 **Redheat**:\n> "You cannot use more than ${SUMMER_CONFIG.ACTION_LIMIT} offense items at once!"`,
+                        ),
+                    ],
+                });
+            }
+
+            if (
+                data.inventory[itemKey as keyof typeof data.inventory] < amount
+            ) {
+                return await reply(message.channel, {
+                    content: `<@${message.author.id}>`,
+                    embeds: [
+                        embed.setDescription(
+                            data.inventory[
+                                itemKey as keyof typeof data.inventory
+                            ] <= 0
+                                ? `💥 **Redheat**:\n> "You should go buy some ${itemKey}!\n\n-# (Run \`${commandDetails.shop.usage}\` to view purchasable items, then \`${commandDetails.buy.usage}\` to purchase them. Use single space after prefix.)"`
+                                : `💥 **Redheat**:\n> "You don't have enough ${itemKey}!"`,
+                        ),
                     ],
                 });
             }
 
             if (itemKey === "bucket") {
-                if (data.castle.evolution === 0) {
-                    if (
-                        data.inventory.bucket < 1 ||
-                        data.inventory.water < 1 ||
-                        data.inventory.sand < 1
-                    ) {
-                        return await reply(message.channel, {
-                            content: `<@${message.author.id}>`,
-                            embeds: [
-                                embed.setDescription(
-                                    "You need 1 Bucket, 1 Water, and 1 Sand to build your first sandcastle!",
-                                ),
-                            ],
-                        });
-                    }
-                    data.inventory.bucket--;
-                    data.inventory.water--;
-                    data.inventory.sand--;
-                    data.castle.evolution = 1;
-                    data.castle.health = EVOLUTION_HP[1];
-                    await Bun.write(path, JSON.stringify(data));
+                const castles = data.castles || [];
+                const activeCastle = castles[castles.length - 1];
+
+                const isBuildingNew =
+                    !activeCastle || activeCastle.evolution === 3;
+
+                if (isBuildingNew && castles.length >= 4) {
                     return await reply(message.channel, {
                         content: `<@${message.author.id}>`,
                         embeds: [
                             embed.setDescription(
-                                `Your castle is now at level ${data.castle.evolution} with ${data.castle.health} HP.`,
+                                `💥 **Redheat**:\n> "You have reached the limit of 4 castles!"`,
+                            ),
+                        ],
+                    });
+                }
+
+                if (
+                    data.inventory.bucket < 1 ||
+                    data.inventory.water < 1 ||
+                    data.inventory.sand < 1
+                ) {
+                    const actionWord = isBuildingNew ? "build" : "upgrade";
+                    return await reply(message.channel, {
+                        content: `<@${message.author.id}>`,
+                        embeds: [
+                            embed.setDescription(
+                                `💥 **Redheat**:\n> "You need 1 Bucket, 1 Water, and 1 Sand to ${actionWord} your sandcastle!"`,
+                            ),
+                        ],
+                    });
+                }
+
+                data.inventory.bucket--;
+                data.inventory.water--;
+                data.inventory.sand--;
+
+                if (isBuildingNew) {
+                    const newCastle = {
+                        evolution: 1,
+                        health: EVOLUTION_HP[1],
+                        damage_taken: 0,
+                    };
+                    castles.push(newCastle);
+                    data.castles = castles;
+                    await saveData(data);
+                    return await reply(message.channel, {
+                        content: `<@${message.author.id}>`,
+                        embeds: [
+                            embed.setDescription(
+                                `💥 **Redheat**:\n> "You built a new castle! It is level 1 with ${newCastle.health} HP. (Castle #${castles.length}/4)"`,
                             ),
                         ],
                     });
                 } else {
-                    return await reply(message.channel, {
-                        content: `<@${message.author.id}>`,
-                        embeds: [
-                            embed.setDescription("You already have a castle!"),
-                        ],
-                    });
-                }
-            } else if (itemKey === "sand") {
-                if (data.castle.evolution === 0) {
+                    activeCastle.evolution += 1;
+                    activeCastle.health =
+                        EVOLUTION_HP[
+                            activeCastle.evolution as keyof typeof EVOLUTION_HP
+                        ];
+                    data.castles = castles;
+                    await saveData(data);
                     return await reply(message.channel, {
                         content: `<@${message.author.id}>`,
                         embeds: [
                             embed.setDescription(
-                                "You need to build a castle first! (Use bucket)",
+                                `💥 **Redheat**:\n> "Your castle #${castles.length} evolved to level ${activeCastle.evolution} with ${activeCastle.health} HP."`,
+                            ),
+                        ],
+                    });
+                }
+            } else if (itemKey === "sand") {
+                const castles = data.castles || [];
+                const activeCastle = castles[castles.length - 1];
+
+                if (!activeCastle) {
+                    return await reply(message.channel, {
+                        content: `<@${message.author.id}>`,
+                        embeds: [
+                            embed.setDescription(
+                                `💥 **Redheat**:\n> "You need to build a castle first! (Use bucket)"`,
                             ),
                         ],
                     });
@@ -277,25 +543,26 @@ client.on("messageCreate", async (message) => {
                         content: `<@${message.author.id}>`,
                         embeds: [
                             embed.setDescription(
-                                "You need 1 Sand and 1 Water to repair 60 HP to your sandcastle!",
+                                `💥 **Redheat**:\n> "You need 1 Sand and 1 Water to repair 60 HP to your sandcastle!"`,
                             ),
                         ],
                     });
                 }
                 data.inventory.sand--;
                 data.inventory.water--;
-                data.castle.health = Math.min(
-                    data.castle.health + 60,
+                activeCastle.health = Math.min(
+                    activeCastle.health + 60,
                     EVOLUTION_HP[
-                        data.castle.evolution as keyof typeof EVOLUTION_HP
+                        activeCastle.evolution as keyof typeof EVOLUTION_HP
                     ],
                 );
-                await Bun.write(path, JSON.stringify(data));
+                data.castles = castles;
+                await saveData(data);
                 return await reply(message.channel, {
                     content: `<@${message.author.id}>`,
                     embeds: [
                         embed.setDescription(
-                            `Your castle is now at level ${data.castle.evolution} with ${data.castle.health} HP.`,
+                            `💥 **Redheat**:\n> "Your castle #${castles.length} is now at level ${activeCastle.evolution} with ${activeCastle.health} HP."`,
                         ),
                     ],
                 });
@@ -303,35 +570,44 @@ client.on("messageCreate", async (message) => {
                 shopItems[itemKey] &&
                 shopItems[itemKey].type === "offense"
             ) {
-                if (data.castle.damage_taken > 0) {
+                const castles = data.castles || [];
+                const activeCastle = castles[castles.length - 1];
+
+                if (activeCastle && activeCastle.damage_taken > 0) {
                     return await reply(message.channel, {
                         content: `<@${message.author.id}>`,
                         embeds: [
                             embed.setDescription(
-                                "You cannot attack while in debt! Recover your castle health first.",
+                                `💥 **Redheat**:\n> "You cannot attack while in damage taken! Recover your castle health first."`,
                             ),
                         ],
                     });
                 }
-                data.inventory[itemKey as keyof typeof data.inventory]--;
-                data.castle.damage_taken += shopItems[itemKey].damage || 0;
-                await Bun.write(path, JSON.stringify(data));
+                data.inventory[itemKey as keyof typeof data.inventory] -=
+                    amount;
+                if (activeCastle) {
+                    activeCastle.damage_taken +=
+                        (shopItems[itemKey].damage || 0) * amount;
+                }
+                data.castles = castles;
+                await saveData(data);
                 return await reply(message.channel, {
                     content: `<@${message.author.id}>`,
                     embeds: [
                         embed.setDescription(
-                            `You used ${itemKey} on <@${target.id}>!`,
+                            `💥 **Redheat**:\n> "You used ${amount} ${itemKey} on <@${target.id}>!"`,
                         ),
                     ],
                 });
             } else {
-                data.inventory[itemKey as keyof typeof data.inventory]--;
-                await Bun.write(path, JSON.stringify(data));
+                data.inventory[itemKey as keyof typeof data.inventory] -=
+                    amount;
+                await saveData(data);
                 return await reply(message.channel, {
                     content: `<@${message.author.id}>`,
                     embeds: [
                         embed.setDescription(
-                            `You used ${itemKey} on <@${target.id}>!`,
+                            `💥 **Redheat**:\n> "You used ${amount} ${itemKey} on <@${target.id}>!"`,
                         ),
                     ],
                 });
