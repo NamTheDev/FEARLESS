@@ -3,9 +3,8 @@ import { CONFIG } from "@core/config";
 import { economyState } from "@core/state";
 import { getRandomInt } from "@utils/math";
 import db, { getBalanceStmt, updateBalanceStmt, updateInventoryStmt } from "@core/database";
-import { getBalance, subBloodern, subGorelith, getInventory } from "@logic/economy";
+import { getBloodern, subBloodern, subGorelith, getInventory } from "@logic/economy";
 import { buildShopEmbed } from "@utils/messages";
-import { adjustXp } from "@logic/leveling";
 
 export function getGorelith(userId: string): number {
   const res = getBalanceStmt.get(userId) as { gorelith: number } | undefined;
@@ -133,7 +132,7 @@ export async function handleMerchantInteraction(interaction: ButtonInteraction) 
       await interaction.message.edit({ embeds: [newEmbed] }).catch(() => null);
     }
 
-    return await interaction.reply({ content: `✅ Bought **${item.name}**! New balance: ${getBalance(userId)} bloodern / ${getGorelith(userId)} gorelith.`, flags: MessageFlags.Ephemeral });
+    return await interaction.reply({ content: `✅ Bought **${item.name}**! New balance: ${getBloodern(userId)} bloodern / ${getGorelith(userId)} gorelith.`, flags: MessageFlags.Ephemeral });
   }
 }
 

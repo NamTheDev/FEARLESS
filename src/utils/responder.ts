@@ -3,8 +3,6 @@ import {
     EmbedBuilder,
     Message,
     MessageFlags,
-    TextChannel,
-    WebhookClient,
 } from "discord.js";
 import { CONFIG } from "@core/config";
 import { handleSystemErrorLog } from "@logic/logging";
@@ -55,18 +53,6 @@ export const Responder = {
             embeds: [embed],
             flags,
         });
-    },
-
-    webhook: async (url: string, channel: TextChannel, payload: any) => {
-        const webhook = new WebhookClient({ url });
-        try {
-            await webhook.send({
-                ...payload,
-            });
-        } catch (e: any) {
-            if (e.code === 10015) return null;
-            throw e;
-        }
     },
 
     reply: async (target: InteractionOrMessage, payload: any) => {

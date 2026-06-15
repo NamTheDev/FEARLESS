@@ -22,7 +22,6 @@ export const CONFIG = {
     WHITELISTED_GUILDS: [mainConfig.GUILD_ID, testConfig.GUILD_ID],
     DEVELOPER_USER_ID: mergedConfig.DEVELOPER_USER_ID,
     LOG_CHANNEL_ID: mergedConfig.LOG_CHANNEL_ID,
-    SUMMER_WEBHOOK_URL: getEnv("SUMMER_WEBHOOK_URL"),
     CHANNELS: {
         GENERAL: mergedConfig.GENERAL_CHANNEL_ID,
         LEVEL_UP: mergedConfig.LEVEL_UP_CHANNEL_ID,
@@ -128,7 +127,7 @@ export const CONFIG = {
             NEXT_EMOJI: "➡️",
         },
     },
-    LOGIC: {
+    LOGIC: {        
         LEVELING: {
             ONE_HOUR: 60 * 60 * 1000,
             TEN_MINUTES: 10 * 60 * 1000,

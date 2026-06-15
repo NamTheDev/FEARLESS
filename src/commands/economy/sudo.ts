@@ -1,7 +1,7 @@
 import { Message, EmbedBuilder } from "discord.js";
 import { SlashCommand } from "@typings/SlashCommand";
 import { CONFIG } from "@core/config";
-import { addBloodern, getBalance } from "@logic/economy";
+import { addBloodern, getBloodern } from "@logic/economy";
 import db, { getBalanceStmt, updateBalanceStmt } from "@core/database";
 import { getGorelith } from "@logic/merchant";
 

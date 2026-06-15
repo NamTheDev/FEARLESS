@@ -24,13 +24,12 @@ import { join } from "node:path";
 import { getRandomInt } from "@utils/math";
 import { adjustXp } from "@logic/leveling";
 import {
-  buildReceiptEmbed,
   buildLootSpawnEmbed,
   buildShopEmbed,
   buildPurchaseApprovalEmbed,
 } from "@utils/messages";
 
-export function getBalance(userId: string): number {
+export function getBloodern(userId: string): number {
   const res = getBalanceStmt.get(userId) as { bloodern: number } | undefined;
   return res?.bloodern || 0;
 }
@@ -458,7 +457,7 @@ export async function handleEconomyInteraction(interaction: ButtonInteraction) {
     addBloodern(interaction.user.id, finalValue);
 
     await interaction.reply({
-      content: `🎉 Claimed **${dropData.lootName}** for **${finalValue}**! Balance: ${getBalance(interaction.user.id)}`,
+      content: `🎉 Claimed **${dropData.lootName}** for **${finalValue}**! Balance: ${getBloodern(interaction.user.id)}`,
       flags: MessageFlags.Ephemeral,
     });
 
@@ -498,7 +497,7 @@ export async function handleEconomyInteraction(interaction: ButtonInteraction) {
 
     if (customId === "shop_balance") {
       return await interaction.reply({
-        content: `💰 Your current balance is: **${getBalance(interaction.user.id)}** bloodern.`,
+        content: `💰 Your current balance is: **${getBloodern(interaction.user.id)}** bloodern.`,
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -539,7 +538,7 @@ export async function handleEconomyInteraction(interaction: ButtonInteraction) {
     return await interaction
       .reply({
         content: result.success
-          ? `✅ ${result.message} New balance: **${getBalance(interaction.user.id)}**.`
+          ? `✅ ${result.message} New balance: **${getBloodern(interaction.user.id)}**.`
           : `❌ ${result.message}`,
         flags: MessageFlags.Ephemeral,
       })

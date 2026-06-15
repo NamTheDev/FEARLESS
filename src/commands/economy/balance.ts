@@ -1,6 +1,6 @@
 import { Message } from "discord.js";
 import { SlashCommand } from "@typings/SlashCommand";
-import { getBalance } from "@logic/economy";
+import { getBloodern } from "@logic/economy";
 import { getGorelith } from "@logic/merchant";
 import { buildBalanceEmbed } from "@utils/messages";
 
@@ -13,7 +13,7 @@ export const command: SlashCommand = {
     messageOnly: true,
     executeMessage: async (message: Message, args: string[]) => {
         const target = message.mentions.users.first() || message.author;
-        const bloodern = getBalance(target.id);
+        const bloodern = getBloodern(target.id);
         const gorelith = getGorelith(target.id);
 
         const embed = buildBalanceEmbed(target, bloodern, gorelith);
