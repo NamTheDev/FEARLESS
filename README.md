@@ -1,5 +1,8 @@
 # FEARLESS
 
+> [!WARNING]
+> **Abandoned.** This project is no longer maintained.
+
 A custom Discord bot tailored for the **Ruthless Fears** community.
 
 ## ⚔️ About The Community
